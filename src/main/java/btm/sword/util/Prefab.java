@@ -1,6 +1,8 @@
 package btm.sword.util;
 
 
+import btm.sword.system.attack.Attack;
+
 import org.bukkit.Color;
 import org.bukkit.Material;
 import org.bukkit.Particle;
@@ -9,6 +11,8 @@ import org.bukkit.util.Vector;
 import btm.sword.config.section.AudioConfig;
 import btm.sword.util.display.ParticleWrapper;
 import btm.sword.util.sound.SoundWrapper;
+
+import java.util.function.Function;
 
 public class Prefab {
     public static class Particles {
@@ -54,16 +58,32 @@ public class Prefab {
     }
 
     public static class Direction {
-        public static final Vector UP = new Vector(0, 1, 0);
-        public static final Vector DOWN = new Vector(0, -1, 0);
-        public static final Vector NORTH = new Vector(0, 0, -1);
-        public static final Vector SOUTH = new Vector(0, 0, 1);
-        public static final Vector OUT_UP = new Vector(0, 1, 1);
-        public static final Vector OUT_DOWN = new Vector(0, -1, 1);
+        private static final Vector UP = new Vector(0, 1, 0);
+        public static Vector UP() { return UP.clone(); }
+
+        private static final Vector DOWN = new Vector(0, -1, 0);
+        public static Vector DOWN() { return DOWN.clone(); }
+
+        private static final Vector NORTH = new Vector(0, 0, -1);
+        public static Vector NORTH() { return NORTH.clone(); }
+
+        private static final Vector SOUTH = new Vector(0, 0, 1);
+        public static Vector SOUTH() { return SOUTH.clone(); }
+
+        private static final Vector OUT_UP = new Vector(0, 1, 1);
+        public static Vector OUT_UP() { return OUT_UP.clone(); }
+
+        private static final Vector OUT_DOWN = new Vector(0, -1, 1);
+        public static Vector OUT_DOWN() { return OUT_DOWN.clone(); }
     }
 
     public static class Value {
         public static final int MILLISECONDS_PER_TICK = 50; // 1000/20 = 50
+    }
+
+    public static class Function {
+        public static final java.util.function.Function<Attack, Vector> DEFAULT_KNOCKBACK =
+            a -> a.getTo().add(a.getForwardVector());
     }
 
     /**

@@ -51,7 +51,7 @@ public class AttackAction extends SwordAction {
             executor.requestUmbralBladeState(BladeRequest.ATTACK_QUICK);
         }
 
-        double dot = executor.entity().getEyeLocation().getDirection().dot(Prefab.Direction.UP);
+        double dot = executor.entity().getEyeLocation().getDirection().dot(Prefab.Direction.UP());
 
         if (executor.isGrounded()) {
             for (var entry : attackMap.entrySet()) {

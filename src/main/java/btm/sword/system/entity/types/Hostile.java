@@ -136,7 +136,7 @@ public class Hostile extends Combatant {
             @Override
             public void run() {
                 if (i >= 1) cancel();
-                mob.setVelocity(Prefab.Direction.UP.clone().multiply(1));
+                mob.setVelocity(Prefab.Direction.UP().multiply(1));
                 i++;
             }
         }.runTaskTimer(Sword.getInstance(), 0L, 1L);

@@ -115,7 +115,7 @@ public class DisplayUtil {
      */
     public static void itemDisplayFollow(SwordEntity entity, ItemDisplay itemDisplay, Vector direction, double heightOffset, boolean followHead) {
         double originalYaw = Math.toRadians(entity.entity().getBodyYaw());
-        Vector offset = Prefab.Direction.UP.clone().multiply(heightOffset);
+        Vector offset = Prefab.Direction.UP().multiply(heightOffset);
 
         var displayFollow = ConfigManager.getInstance().getDisplay().getItemDisplayFollow();
         itemDisplay.setBillboard(displayFollow.getBillboardMode());

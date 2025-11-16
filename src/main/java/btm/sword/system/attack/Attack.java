@@ -15,7 +15,6 @@ import org.bukkit.entity.LivingEntity;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.util.RayTraceResult;
 import org.bukkit.util.Vector;
-import org.jetbrains.annotations.NotNull;
 
 import btm.sword.config.ConfigManager;
 import btm.sword.config.section.CombatConfig;
@@ -52,11 +51,15 @@ public class Attack extends SwordAction implements Runnable {
     @Setter // origin can be set for stationary attacks
     protected Location origin;
     protected Location attackLocation; // current bezier vec + origin
+
     protected Vector cur;
     protected Vector prev;
+    protected Vector to; // the vector from the previous vector TO the current bezier vector
 
     protected final HashSet<LivingEntity> hitDuringAttack;
     protected Predicate<LivingEntity> filter;
+    @Getter
+    protected SwordEntity currentTarget;
 
     protected int curIteration;
 
@@ -196,6 +199,7 @@ public class Attack extends SwordAction implements Runnable {
                     applyConsistentEffects();
 
                     cur = weaponPathFunction.apply(attackStartValue + (step * idx));
+                    to = cur.clone().subtract(prev);
                     attackLocation = origin.clone().add(cur);
 
                     drawAttackEffects();
@@ -264,17 +268,19 @@ public class Attack extends SwordAction implements Runnable {
             if (!hitDuringAttack.contains(target)) {
                 SwordEntity sTarget = SwordEntityArbiter.getOrAdd(target.getUniqueId());
 
-                if (sTarget == null)
+                if (sTarget == null || sTarget.isDead())
                     continue;
 
-                if (!sTarget.entity().isDead()) {
-                    sTarget.hit(attacker,
+                currentTarget = sTarget;
+
+                if (!currentTarget.entity().isDead()) {
+                    currentTarget.hit(attacker,
                             5, 1, 15, 6,
-                            getKnockBackVector(attackType, target));
+                            attackType.knockbackFunction().apply(this));
 
-                    Prefab.Particles.TEST_HIT.display(sTarget.getChestLocation());
+                    Prefab.Particles.TEST_HIT.display(currentTarget.getChestLocation());
 
-                    if (onHitInstructions != null) onHitInstructions.accept(sTarget);
+                    if (onHitInstructions != null) onHitInstructions.accept(currentTarget);
                 } else {
                     attacker.message("Target: " + target + " caused an NPE");
                 }
@@ -320,22 +326,27 @@ public class Attack extends SwordAction implements Runnable {
         weaponPathFunction = BezierUtil.cubicBezier3D(adjusted.get(0), adjusted.get(1), adjusted.get(2), adjusted.get(3));
     }
 
-    private @NotNull Vector getKnockBackVector(AttackType attackType, LivingEntity target) {
-        var attackVelocity = ConfigManager.getInstance().getPhysics().getAttackVelocity();
-        Vector base =  Prefab.Direction.UP.clone().multiply(attackVelocity.getKnockbackVerticalBase());
-        Vector r = curRight.clone().multiply(attackVelocity.getKnockbackHorizontalModifier());
+    public Vector getCur() {
+        return cur.clone();
+    }
 
-        return switch (attackType) {
-            case SLASH1 -> base.add(r);
-            case SLASH2 -> base.add(r.multiply(-1));
-            case SLASH3 -> target.getLocation().toVector()
-                    .subtract(origin.toVector()).normalize()
-                    .subtract(new Vector(0, attackVelocity.getKnockbackVerticalBase() * 2, 0));
-            case D_AIR -> base.multiply(-2);
-            case N_AIR -> target.getLocation().toVector()
-                    .subtract(origin.toVector()).normalize().multiply(attackVelocity.getKnockbackNormalMultiplier());
+    public Vector getPrev() {
+        return prev.clone();
+    }
 
-            default -> cur.clone().normalize().multiply(attackVelocity.getKnockbackNormalMultiplier());
-        };
+    public Vector getTo() {
+        return to.clone();
+    }
+
+    public Vector getRightVector() {
+        return curRight.clone();
+    }
+
+    public Vector getForwardVector() {
+        return curForward.clone();
+    }
+
+    public Vector getUpVector() {
+        return curUp.clone();
     }
 }

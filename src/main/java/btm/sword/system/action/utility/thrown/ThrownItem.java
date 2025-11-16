@@ -255,16 +255,16 @@ public class ThrownItem {
                 .getPhysics().getThrownItems().getTrajectoryRotation());
         velocity = flatDir.clone();
         Vector forwardVelocity = flatDir.clone().multiply(forwardCoefficient);
-        Vector upwardVelocity = Prefab.Direction.UP.clone().multiply(upwardCoefficient);
+        Vector upwardVelocity = Prefab.Direction.UP().multiply(upwardCoefficient);
 
         double gravDamper = ConfigManager.getInstance().getPhysics().getThrownItems().getGravityDamper();
 
         // TODO: make these as params in constructor or mke dynamic in some other way so that umbral blade can reassign it's funcs
         positionFunction = t -> flatDir.clone().multiply(forwardCoefficient * t)
-                .add(Prefab.Direction.UP.clone().multiply((upwardCoefficient * t) - (initialVelocity * (1 / gravDamper) * t * t)));
+                .add(Prefab.Direction.UP().multiply((upwardCoefficient * t) - (initialVelocity * (1 / gravDamper) * t * t)));
 
         velocityFunction = t -> forwardVelocity.clone()
-                .add(upwardVelocity.clone().add(Prefab.Direction.UP.clone().multiply(-initialVelocity * (2 / (gravDamper)) * t)));
+                .add(upwardVelocity.clone().add(Prefab.Direction.UP().multiply(-initialVelocity * (2 / (gravDamper)) * t)));
         //endregion
 
         new BukkitRunnable() {
@@ -430,7 +430,7 @@ public class ThrownItem {
         if (name.endsWith("_SWORD") || name.endsWith("AXE")) {
             Vector kb = EntityUtil.isOnGround(hit) ?
                     velocity.clone().multiply(swordAxeDamage.getKnockbackGrounded()) :
-                    VectorUtil.getProjOntoPlane(velocity, Prefab.Direction.UP).multiply(swordAxeDamage.getKnockbackAirborne());
+                    VectorUtil.getProjOntoPlane(velocity, Prefab.Direction.UP()).multiply(swordAxeDamage.getKnockbackAirborne());
 
             impale(hit);
             hitEntity.hit(thrower,
