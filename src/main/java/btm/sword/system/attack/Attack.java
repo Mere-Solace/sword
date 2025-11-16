@@ -5,6 +5,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
@@ -71,6 +72,8 @@ public class Attack extends SwordAction implements Runnable {
     protected Runnable callback;
     protected int msBeforeCallbackSchedule;
 
+    protected Consumer<SwordEntity> onHitInstructions;
+
     @Getter
     protected Attack nextAttack;
     protected int millisecondDelayBeforeNextAttack;
@@ -118,6 +121,11 @@ public class Attack extends SwordAction implements Runnable {
     public Attack setCallback(Runnable callback, int msBeforeCallbackSchedule) {
         this.callback = callback;
         this.msBeforeCallbackSchedule = msBeforeCallbackSchedule;
+        return this;
+    }
+
+    public Attack setHitInstructions(Consumer<SwordEntity> onHitInstructions) {
+        this.onHitInstructions = onHitInstructions;
         return this;
     }
 
@@ -265,6 +273,8 @@ public class Attack extends SwordAction implements Runnable {
                             getKnockBackVector(attackType, target));
 
                     Prefab.Particles.TEST_HIT.display(sTarget.getChestLocation());
+
+                    if (onHitInstructions != null) onHitInstructions.accept(sTarget);
                 } else {
                     attacker.message("Target: " + target + " caused an NPE");
                 }

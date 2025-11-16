@@ -504,6 +504,8 @@ public class SwordPlayer extends Combatant {
 
         indexOfRightHold = getCurrentInvIndex();
 
+        // TODO: This is where to implement catches for right clicking different items!!!
+
         if (!mainItemStackAtTimeOfHold.isEmpty())
             setItemStackInHand(new ItemStack(Material.GUNPOWDER), true); // can change the logic here later
 

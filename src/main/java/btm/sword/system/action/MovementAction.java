@@ -13,6 +13,8 @@ import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.ItemDisplay;
 import org.bukkit.entity.LivingEntity;
+import org.bukkit.potion.PotionEffect;
+import org.bukkit.potion.PotionEffectType;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.util.RayTraceResult;
 import org.bukkit.util.Vector;
@@ -61,6 +63,9 @@ public class MovementAction extends SwordAction {
                 final Location dashStartLocation = ex.getLocation().add(new Vector(0, cfg.getDashInitialOffsetY(), 0));
                 boolean onGround = executor.isGrounded();
                 Location o = ex.getEyeLocation();
+
+                PotionEffect speed = new PotionEffect(PotionEffectType.SPEED, 3, 1);
+                ex.addPotionEffect(speed);
 
                 // check for an item that may be the target of the dash
                 Entity targetedItem = HitboxUtil.ray(o, o.getDirection(), maxDistance, cfg.getDashRayHitboxRadius(),

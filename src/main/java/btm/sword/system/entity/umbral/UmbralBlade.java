@@ -436,7 +436,7 @@ public class UmbralBlade extends ThrownItem {
         }
         else if (state == AttackingQuickState.class || state == AttackingHeavyState.class) {
             return new Transformation(
-                new Vector3f(0, 0, 0),
+                new Vector3f(0, 0, -1), // TODO: fix so tip of blade is at particles
                 new Quaternionf().rotateX((float) Math.PI/2), // TODO - test
                 scale,
                 new Quaternionf());
@@ -601,6 +601,7 @@ public class UmbralBlade extends ThrownItem {
                         20, 10, 100,
                         0, 1)
                         .setBlade(this)
+                        .setHitInstructions(swordEntity -> Prefab.Particles.BLEED.display(swordEntity.getChestLocation()))
                         .setCallback(attackEndCallback, 200),
                     100)
 

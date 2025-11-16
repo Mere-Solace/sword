@@ -93,7 +93,6 @@ public abstract class SwordEntity {
     protected boolean toughnessBroken;
     protected int shardsLost;
 
-    // TODO: override all getters of vectors and locations to return a .clone() of that instance
     protected final double eyeHeight;
     protected final Vector chestVector;
 
@@ -748,5 +747,17 @@ public abstract class SwordEntity {
                 entity().getEyeLocation(), testBasis.get(1), 4, 0.25);
         DrawUtil.line(List.of(Prefab.Particles.TEST_SWORD_BLUE),
                 entity().getEyeLocation(), testBasis.getLast(), 4, 0.25);
+    }
+
+    public Vector getChestVector() {
+        return chestVector.clone();
+    }
+
+    public Location getLocation() {
+        return entity().getLocation();
+    }
+
+    public Vector getEyeDirection() {
+        return entity().getLocation().getDirection();
     }
 }
