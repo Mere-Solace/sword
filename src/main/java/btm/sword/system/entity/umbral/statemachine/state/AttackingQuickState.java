@@ -1,9 +1,9 @@
 package btm.sword.system.entity.umbral.statemachine.state;
 
+import org.bukkit.Color;
+
 import btm.sword.system.entity.umbral.UmbralBlade;
 import btm.sword.system.entity.umbral.statemachine.UmbralStateFacade;
-
-import org.bukkit.Color;
 
 /**
  * State where the UmbralBlade is performing a quick attack.

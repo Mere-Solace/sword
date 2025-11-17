@@ -81,6 +81,7 @@ public class EntityListener implements Listener {
      */
     @EventHandler
     public void entityDamageEvent(EntityDamageEvent event) {
+
         SwordEntity hurt = SwordEntityArbiter.getOrAdd(event.getEntity().getUniqueId());
 
         DamageSource damageSource = event.getDamageSource();

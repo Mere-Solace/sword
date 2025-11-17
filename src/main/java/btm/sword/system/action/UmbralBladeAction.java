@@ -3,6 +3,7 @@ package btm.sword.system.action;
 import btm.sword.system.entity.types.Combatant;
 import btm.sword.system.entity.umbral.UmbralBlade;
 import btm.sword.system.entity.umbral.input.BladeRequest;
+import btm.sword.system.entity.umbral.statemachine.state.LodgedState;
 import btm.sword.system.entity.umbral.statemachine.state.WieldState;
 
 public class UmbralBladeAction extends SwordAction {
@@ -33,7 +34,12 @@ public class UmbralBladeAction extends SwordAction {
         UmbralBlade blade = wielder.getUmbralBlade();
         if (blade == null) return;
 
-        blade.request(BladeRequest.LUNGE);
+        if (blade.inState(LodgedState.class)) {
+            blade.request(BladeRequest.RECALL);
+        }
+        else {
+            blade.request(BladeRequest.LUNGE);
+        }
     }
 
     public static void recall(Combatant wielder) {

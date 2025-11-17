@@ -5,10 +5,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
-import btm.sword.config.ConfigManager;
-import btm.sword.util.math.BezierUtil;
-import btm.sword.util.math.VectorUtil;
-
 import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -25,6 +21,7 @@ import org.joml.Quaternionf;
 import org.joml.Vector3f;
 
 import btm.sword.Sword;
+import btm.sword.config.ConfigManager;
 import btm.sword.system.SwordScheduler;
 import btm.sword.system.action.utility.thrown.InteractiveItemArbiter;
 import btm.sword.system.action.utility.thrown.ThrownItem;
@@ -59,6 +56,8 @@ import btm.sword.system.statemachine.Transition;
 import btm.sword.util.Prefab;
 import btm.sword.util.display.DisplayUtil;
 import btm.sword.util.display.DrawUtil;
+import btm.sword.util.math.BezierUtil;
+import btm.sword.util.math.VectorUtil;
 import lombok.Getter;
 import lombok.Setter;
 import net.kyori.adventure.text.Component;
@@ -311,38 +310,22 @@ public class UmbralBlade extends ThrownItem {
 
 
         // =====================================================================
-        // FLYING
-        // =====================================================================
-        bladeStateMachine.addTransition(new Transition<>(
-            FlyingState.class,
-            LodgedState.class,
-            blade -> false,
-            blade -> {}
-        ));
-
-        bladeStateMachine.addTransition(new Transition<>(
-            FlyingState.class,
-            WaitingState.class,
-            blade -> false,
-            blade -> {}
-        ));
-
-        bladeStateMachine.addTransition(new Transition<>(
-            FlyingState.class,
-            RecallingState.class,
-            blade -> isRequestedAndActive(BladeRequest.RECALL),
-            blade -> {}
-        ));
-
-
-        // =====================================================================
         // LODGED
         // =====================================================================
         bladeStateMachine.addTransition(new Transition<>(
             LodgedState.class,
             RecallingState.class,
             blade -> isRequestedAndActive(BladeRequest.RECALL),
-            blade -> {}
+            blade -> {
+                DisplayUtil.smoothTeleport(blade.getDisplay(), 10);
+                blade.getDisplay().teleport(
+                    blade.getDisplay().getLocation().subtract(
+                        blade.getDisplay().getLocation().getDirection().multiply(6)));
+
+                if (hitEntity != null) {
+                    hitEntity.setVelocity(blade.getDisplay().getLocation().getDirection().multiply(-0.75));
+                }
+            }
         ));
 
         bladeStateMachine.addTransition(new Transition<>(
@@ -356,7 +339,7 @@ public class UmbralBlade extends ThrownItem {
             LodgedState.class,
             ReturningState.class,
             blade -> hitEntity == null || !hitEntity.isValid(),
-            blade -> {} // TODO: Start a timer? Are these onTransition consumers really necessary< seems like the state handles it pretty well...
+            blade -> {}
         ));
 
         bladeStateMachine.addTransition(new Transition<>(
@@ -454,7 +437,7 @@ public class UmbralBlade extends ThrownItem {
                 scale,
                 new Quaternionf());
         }
-        else if (state == ReturningState.class) {
+        else if (state == ReturningState.class || state == RecallingState.class) {
             return new Transformation(
                 new Vector3f(),
                 new Quaternionf().rotateX((float) -Math.PI/2),
@@ -556,7 +539,7 @@ public class UmbralBlade extends ThrownItem {
     // TODO make a stronger and more dynamic verison of this ( could return the task if need be)
     public void returnToWielderAndRequestState(BladeRequest request) {
         BukkitTask lerpTask = DisplayUtil.displaySlerpToOffset(thrower, display,
-            thrower.getChestVector(), 1, 5, 2, 1.5, false,
+            thrower.getChestVector(), 1.75, 5, 2, 0.8, false,
             new BukkitRunnable() {
                 @Override
                 public void run() {
@@ -779,8 +762,20 @@ public class UmbralBlade extends ThrownItem {
     }
 
     @Override
+    public void disposeNaturally() {
+        request(BladeRequest.RECALL);
+    }
+
+    @Override
     public void dispose() {
         super.dispose();
         bladeStateMachine.setDeactivated(true);
+    }
+
+    public void cleanupBeforeNewThrow() {
+        hit = false;
+        grounded = false;
+        caught = false;
+        hitEntity = null;
     }
 }

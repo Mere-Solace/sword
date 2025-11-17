@@ -67,10 +67,10 @@ public enum AttackType {
     ),
 
     LUNGE1(List.of(
-        new Vector(-0.4,0.9,1),
-        new Vector(0,0,10),
-        new Vector(-1.9,0.3,2.24),
-        new Vector(0,-0.3,0.7)),
+        new Vector(0.37,0,2),
+        new Vector(0,0,20),
+        new Vector(1.1,0,3.1),
+        new Vector(0,0,2.46)),
         attack -> new Vector()
     ),
 

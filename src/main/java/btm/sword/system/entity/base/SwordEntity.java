@@ -5,8 +5,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 
-import btm.sword.util.math.Basis;
-
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.entity.ArmorStand;
@@ -37,6 +35,7 @@ import btm.sword.util.Prefab;
 import btm.sword.util.display.DrawUtil;
 import btm.sword.util.entity.EntityUtil;
 import btm.sword.util.entity.HitboxUtil;
+import btm.sword.util.math.Basis;
 import btm.sword.util.math.VectorUtil;
 import btm.sword.util.sound.SoundType;
 import btm.sword.util.sound.SoundUtil;

@@ -431,7 +431,7 @@ public class InputExecutionTree {
         add(List.of(InputType.SHIFT, InputType.SWAP),
             new InputAction(
                 UmbralBladeAction::lunge,
-                executor -> 400L,
+                executor -> 1000L,
                 Combatant::canPerformAction,
                 true,
                 true),

@@ -2,8 +2,11 @@ package btm.sword.system.entity.umbral.statemachine.state;
 
 import org.bukkit.scheduler.BukkitTask;
 
+import btm.sword.system.entity.types.SwordPlayer;
 import btm.sword.system.entity.umbral.UmbralBlade;
 import btm.sword.system.entity.umbral.statemachine.UmbralStateFacade;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.TextColor;
 
 public class StandbyState extends UmbralStateFacade {
     private BukkitTask followTask;
@@ -15,6 +18,10 @@ public class StandbyState extends UmbralStateFacade {
     public void onEnter(UmbralBlade blade) {
         followTask = blade.hoverBehindWielder();
         blade.startIdleMovement();
+        if (blade.getThrower() instanceof SwordPlayer swordPlayer) {
+            swordPlayer.displayTitle(null, Component.text("< Returned >").color(TextColor.color(140, 0, 0)),
+                50, 500, 50);
+        }
     }
 
     @Override

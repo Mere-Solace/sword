@@ -2,6 +2,8 @@ package btm.sword.system.entity.types;
 
 import java.time.Duration;
 
+import javax.annotation.Nullable;
+
 import org.bukkit.Material;
 import org.bukkit.entity.ItemDisplay;
 import org.bukkit.entity.LivingEntity;
@@ -424,18 +426,19 @@ public class SwordPlayer extends Combatant {
      *
      * @param title main title text component
      * @param subtitle subtitle text component
-     * @param fadein duration of fade-in in milliseconds
+     * @param fade_in duration of fade-in in milliseconds
      * @param duration duration to display the title in milliseconds
-     * @param fadeout duration of fade-out in milliseconds
+     * @param fade_out duration of fade-out in milliseconds
      */
-    public void displayTitle(Component title, Component subtitle, long fadein, long duration, long fadeout) {
+    public void displayTitle(@Nullable Component title, @Nullable Component subtitle, long fade_in, long duration, long fade_out) {
+        if (title == null && subtitle == null) return;
         self.showTitle(Title.title(
-                title,
-                subtitle,
+                title == null ? Component.text("") : title,
+                subtitle == null ? Component.text("") : subtitle,
                 Title.Times.times(
-                        Duration.ofMillis(fadein),
+                        Duration.ofMillis(fade_in),
                         Duration.ofMillis(duration),
-                        Duration.ofMillis(fadeout))));
+                        Duration.ofMillis(fade_out))));
     }
 
     /**

@@ -1,6 +1,5 @@
 package btm.sword.system.attack;
 
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
@@ -8,8 +7,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
-
-import btm.sword.util.math.Basis;
 
 import org.bukkit.Location;
 import org.bukkit.Particle;
@@ -30,6 +27,7 @@ import btm.sword.system.entity.types.Combatant;
 import btm.sword.util.Prefab;
 import btm.sword.util.display.ParticleWrapper;
 import btm.sword.util.entity.HitboxUtil;
+import btm.sword.util.math.Basis;
 import btm.sword.util.math.BezierUtil;
 import btm.sword.util.math.VectorUtil;
 import lombok.Getter;

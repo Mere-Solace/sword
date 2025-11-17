@@ -1,16 +1,16 @@
 package btm.sword.system.attack;
 
-import btm.sword.system.entity.SwordEntityArbiter;
-import btm.sword.system.entity.base.SwordEntity;
-import btm.sword.system.entity.umbral.input.BladeRequest;
-import btm.sword.util.entity.HitboxUtil;
+import java.util.HashSet;
+import java.util.List;
 
 import org.bukkit.entity.ItemDisplay;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.util.Vector;
 
-import java.util.HashSet;
-import java.util.List;
+import btm.sword.system.entity.SwordEntityArbiter;
+import btm.sword.system.entity.base.SwordEntity;
+import btm.sword.system.entity.umbral.input.BladeRequest;
+import btm.sword.util.entity.HitboxUtil;
 
 // will Pierce through all enemies and then stick out of the last one. Must Forward Calculate, then... Maybe just stick out of the first one hit
 // Can have an attack that just rips through everything at some point.

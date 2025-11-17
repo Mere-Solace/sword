@@ -1,8 +1,8 @@
 package btm.sword.util.math;
 
-import org.bukkit.util.Vector;
-
 import java.util.List;
+
+import org.bukkit.util.Vector;
 
 // TODO: Implement new, shiny basis class of my own imagining! I miss simplicity...
 public class Basis {

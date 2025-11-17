@@ -1,10 +1,7 @@
 package btm.sword.system.attack;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
-
-import btm.sword.util.math.Basis;
 
 import org.bukkit.entity.ItemDisplay;
 import org.bukkit.scheduler.BukkitRunnable;
@@ -12,6 +9,7 @@ import org.bukkit.util.Vector;
 
 import btm.sword.system.SwordScheduler;
 import btm.sword.util.display.DisplayUtil;
+import btm.sword.util.math.Basis;
 import btm.sword.util.math.BezierUtil;
 import btm.sword.util.math.VectorUtil;
 import lombok.Setter;

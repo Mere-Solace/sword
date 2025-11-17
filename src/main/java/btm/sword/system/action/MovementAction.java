@@ -122,7 +122,8 @@ public class MovementAction extends SwordAction {
                                     SoundUtil.playSound(ex, SoundType.ENTITY_ENDER_DRAGON_FLAP, cfg.getDashFlapSoundVolume(), cfg.getDashFlapSoundPitch());
                                     SoundUtil.playSound(ex, SoundType.ENTITY_PLAYER_ATTACK_SWEEP, cfg.getDashSweepSoundVolume(), cfg.getDashSweepSoundPitch());
                                     executor.setVelocity(u);
-                                    InteractiveItemArbiter.onGrab(id, executor);
+
+                                    InteractiveItemArbiter.onGrab(id, executor); // here is where the display is taken care of
                                 }
                                 else {
                                     Vector v = ex.getVelocity();

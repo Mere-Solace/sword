@@ -1,10 +1,10 @@
 package btm.sword.system.entity.umbral.statemachine.state;
 
+import org.bukkit.Color;
+
 import btm.sword.system.attack.AttackType;
 import btm.sword.system.entity.umbral.UmbralBlade;
 import btm.sword.system.entity.umbral.statemachine.UmbralStateFacade;
-
-import org.bukkit.Color;
 
 public class LungingState extends UmbralStateFacade {
     @Override

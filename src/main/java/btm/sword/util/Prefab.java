@@ -1,7 +1,9 @@
 package btm.sword.util;
 
 
-import btm.sword.system.attack.Attack;
+import java.util.List;
+import java.util.function.Function;
+import java.util.function.Predicate;
 
 import org.bukkit.Color;
 import org.bukkit.Material;
@@ -12,12 +14,9 @@ import org.bukkit.entity.LivingEntity;
 import org.bukkit.util.Vector;
 
 import btm.sword.config.section.AudioConfig;
+import btm.sword.system.attack.Attack;
 import btm.sword.util.display.ParticleWrapper;
 import btm.sword.util.sound.SoundWrapper;
-
-import java.util.List;
-import java.util.function.Function;
-import java.util.function.Predicate;
 
 public class Prefab {
     public static class Particles {
@@ -29,7 +28,7 @@ public class Prefab {
                 new Particle.DustTransition(Color.fromRGB(255, 0,0), Color.fromRGB(102,0,0), 0.7f));
         //            new Particle.DustTransition(Color.fromRGB(211, 222, 240), Color.fromRGB(36, 103, 220), 0.7f));
         public static final ParticleWrapper TEST_HIT = new ParticleWrapper(Particle.CRIT, 30, 0.5, 0.5, 0.5, 0.15);
-        public static final ParticleWrapper BLEED = new ParticleWrapper(Particle.BLOCK, 20, 0, 0, 0, Material.CRIMSON_HYPHAE.createBlockData());
+        public static final ParticleWrapper BLEED = new ParticleWrapper(Particle.BLOCK, 25, 0.1, 0.1, 0.1, Material.CRIMSON_HYPHAE.createBlockData());
 
         public static final ParticleWrapper THROWN_ITEM_IMPALE = new ParticleWrapper(Particle.TRIAL_SPAWNER_DETECTION, 4, 0.1, 0.1, 0.1, 0);
 

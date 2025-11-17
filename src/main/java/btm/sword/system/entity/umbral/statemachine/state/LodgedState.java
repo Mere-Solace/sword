@@ -1,10 +1,10 @@
 package btm.sword.system.entity.umbral.statemachine.state;
 
+import org.bukkit.Color;
+
 import btm.sword.system.action.utility.thrown.InteractiveItemArbiter;
 import btm.sword.system.entity.umbral.UmbralBlade;
 import btm.sword.system.entity.umbral.statemachine.UmbralStateFacade;
-
-import org.bukkit.Color;
 
 /**
  * State where the UmbralBlade is lodged in an entity or block.
@@ -60,6 +60,8 @@ public class LodgedState extends UmbralStateFacade {
         blade.getDisplay().setGlowing(false);
         // TODO: Detach from target
         // TODO: Remove impalement effects
+        blade.cleanupBeforeNewThrow();
+        InteractiveItemArbiter.remove(blade.getDisplay(), false);
     }
 
     @Override

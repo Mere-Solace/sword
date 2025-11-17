@@ -116,11 +116,11 @@ public class SwordEntityArbiter {
         SwordEntity swordEntity = get(uuid);
         if (swordEntity != null) return swordEntity;
 
-        LivingEntity bukkitEntity = (LivingEntity) Bukkit.getEntity(uuid);
-        assert bukkitEntity != null;
-        register(bukkitEntity);
-
-        return get(uuid);
+        if (Bukkit.getEntity(uuid) instanceof LivingEntity livingEntity) {
+            register(livingEntity);
+            return get(uuid);
+        }
+        return null;
     }
 
     /**

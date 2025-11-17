@@ -1,11 +1,8 @@
 package btm.sword.system.action.utility.thrown;
 
-import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
-
-import btm.sword.util.math.Basis;
 
 import org.bukkit.FluidCollisionMode;
 import org.bukkit.Location;
@@ -40,6 +37,7 @@ import btm.sword.util.Prefab;
 import btm.sword.util.display.DisplayUtil;
 import btm.sword.util.display.ParticleWrapper;
 import btm.sword.util.entity.EntityUtil;
+import btm.sword.util.math.Basis;
 import btm.sword.util.math.VectorUtil;
 import lombok.Getter;
 import lombok.Setter;
@@ -493,9 +491,15 @@ public class ThrownItem {
                 swordAxeDamage.getSoulfireReduction(),
                 kb);
 
+            // TODO: since hit entity gets assigned as null, set up a method that assigns an entity and then uses that instead.
             new BukkitRunnable() {
                 @Override
                 public void run() {
+                    if (hitEntity == null) {
+                        cancel();
+                        return;
+                    }
+
                     RayTraceResult pinnedBlock = hit.getWorld().rayTraceBlocks(
                             hitEntity.getChestLocation(), velocity.clone().multiply(1.5),
                             0.5, FluidCollisionMode.NEVER,
@@ -514,6 +518,8 @@ public class ThrownItem {
                         public void run() {
                             if (display.isDead() || i > impalementConfig.getPinMaxIterations()) {
                                 hitEntity.setPinned(false);
+                                // TODO: change this logic for umbral blade.
+                                thrower.message("Disposing naturally from impale in onHit()");
                                 if (!display.isDead()) disposeNaturally();
                                 cancel();
                             }
@@ -530,6 +536,8 @@ public class ThrownItem {
                 @Override
                 public void run() {
                     if (display == null || hitEntity == null) {
+
+                        thrower.message("Disposing naturally from onHit()");
                         disposeNaturally(); // TODO: remember me!
                         cancel();
                         return;
@@ -540,7 +548,7 @@ public class ThrownItem {
                         cancel();
                     }
                     else if (hitEntity.isDead()) {
-                        disposeNaturally();
+                        disposeNaturally(); // TODO: also change this logic
                         cancel();
                     }
                 }
@@ -608,10 +616,12 @@ public class ThrownItem {
     public void hitCheck() {
         Predicate<Entity> effFilter = getFilter();
 
-        if (prev == null) disposeNaturally();
+        if (prev == null) {
+            thrower.message("Disposing cuz prev was null in hitCheck()");
+            disposeNaturally();
+        }
 
-        double entityRadius = ConfigManager.getInstance().getCombat().getHitboxes().getThrownItemEntityRadius();
-        RayTraceResult hitEntity = display.getWorld().rayTraceEntities(prev, velocity, initialVelocity, entityRadius, effFilter);
+        RayTraceResult hitEntity = display.getWorld().rayTraceEntities(prev, velocity, initialVelocity, 1, effFilter);
 
         if (hitEntity == null) return;
 
@@ -635,11 +645,6 @@ public class ThrownItem {
         // Throwing a weapon should not immediately result in catching it, therefore a grace period is in place.
         int gracePeriod = ConfigManager.getInstance().getTiming().getThrownItems().getCatchGracePeriod();
         return t < gracePeriod ? entity -> filter.test(entity) && entity.getUniqueId() != thrower.getUniqueId() : filter;
-    }
-
-    public void setFunctions(Function<Double, Vector> positionFunction, Function<Double, Vector> velocityFunction) {
-        this.positionFunction = positionFunction;
-        this.velocityFunction = velocityFunction;
     }
 
     /**
