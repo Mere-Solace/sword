@@ -6,13 +6,18 @@ import btm.sword.system.attack.Attack;
 import org.bukkit.Color;
 import org.bukkit.Material;
 import org.bukkit.Particle;
+import org.bukkit.entity.Entity;
+import org.bukkit.entity.EntityType;
+import org.bukkit.entity.LivingEntity;
 import org.bukkit.util.Vector;
 
 import btm.sword.config.section.AudioConfig;
 import btm.sword.util.display.ParticleWrapper;
 import btm.sword.util.sound.SoundWrapper;
 
+import java.util.List;
 import java.util.function.Function;
+import java.util.function.Predicate;
 
 public class Prefab {
     public static class Particles {
@@ -38,7 +43,7 @@ public class Prefab {
 
         public static final ParticleWrapper TEST_SPARKLE = new ParticleWrapper(Particle.ELECTRIC_SPARK, 2, 0, 0, 0, 0);
 
-        public static final ParticleWrapper COLLIDE = new ParticleWrapper(Particle.CRIT, 10, 0.1, 0.1, 0.1, 0.5);
+        public static final ParticleWrapper COLLIDE = new ParticleWrapper(Particle.CRIT, 1, 0.1, 0.1, 0.1, 0.5);
 
         public static final ParticleWrapper GRAB_CLOUD = new ParticleWrapper(Particle.POOF, 20, 0.5, 0.5, 0.5, 0.1);
         public static final ParticleWrapper GRAB_ATTEMPT = new ParticleWrapper(Particle.GUST, 3, 0.01, 0.01, 0.01);
@@ -81,9 +86,22 @@ public class Prefab {
         public static final int MILLISECONDS_PER_TICK = 50; // 1000/20 = 50
     }
 
-    public static class Function {
-        public static final java.util.function.Function<Attack, Vector> DEFAULT_KNOCKBACK =
+    public static class Instruction {
+        public static final Function<Attack, Vector> DEFAULT_KNOCKBACK =
             a -> a.getTo().add(a.getForwardVector());
+
+        /**
+         * 1st in list: target to be checked
+         * </p>
+         * 2nd in list: self/entity to be excluded
+         */
+        public static final Predicate<List<Entity>> DEFAULT_HITBOX_FILTER = // TODO: Make more of these and use them.
+            checkAndSelf ->
+                checkAndSelf.size() == 2 &&
+                (checkAndSelf.getFirst() instanceof LivingEntity target) &&
+                target.getUniqueId() != checkAndSelf.getLast().getUniqueId() &&
+                target.isValid() &&
+                target.getType() != EntityType.ARMOR_STAND;
     }
 
     /**

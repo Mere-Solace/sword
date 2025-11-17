@@ -47,7 +47,7 @@ public class AttackingQuickState extends UmbralStateFacade {
         blade.performAttack(5.0, false);
         // TODO: potentially add per state glow changes or just a method for this
         blade.getDisplay().setGlowing(true);
-        blade.getDisplay().setGlowColorOverride(Color.fromRGB(255, 0, 0));
+        blade.getDisplay().setGlowColorOverride(Color.fromRGB(1,1, 1));
     }
 
     @Override

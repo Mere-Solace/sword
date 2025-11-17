@@ -145,7 +145,7 @@ public class HitboxUtil {
     }
 
 
-    public static HashSet<LivingEntity> secant(Location origin, Location end, double thickness, Predicate<LivingEntity> filter) {
+    public static HashSet<LivingEntity> secant(Location origin, Location end, double thickness, Predicate<Entity> filter) {
         HashSet<LivingEntity> hit = new HashSet<>();
 
         Vector direction = end.clone().subtract(origin).toVector();
@@ -220,6 +220,8 @@ public class HitboxUtil {
         RayTraceResult result = origin.getWorld().rayTraceEntities(origin, direction, maxDistance, raySize, filter);
         return result == null ? null : result.getHitEntity();
     }
+
+
 
     /**
      * Returns all {@link LivingEntity} instances within a spherical radius at the

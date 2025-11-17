@@ -1,7 +1,10 @@
 package btm.sword.system.entity.umbral.statemachine.state;
 
+import btm.sword.system.action.utility.thrown.InteractiveItemArbiter;
 import btm.sword.system.entity.umbral.UmbralBlade;
 import btm.sword.system.entity.umbral.statemachine.UmbralStateFacade;
+
+import org.bukkit.Color;
 
 /**
  * State where the UmbralBlade is lodged in an entity or block.
@@ -43,13 +46,18 @@ public class LodgedState extends UmbralStateFacade {
 
     @Override
     public void onEnter(UmbralBlade blade) {
-        blade.endIdleMovement();
-        // TODO: Attach blade display to target entity/block
-        // TODO: Apply impalement effects (bleeding, damage over time)
+//        if (blade.getHitEntity() != null && blade.getHitEntity().isValid()) {
+//            blade.impale(blade.getHitEntity().entity());
+//        } // redundant, already called in onHit()
+        InteractiveItemArbiter.put(blade);
+        blade.getDisplay().setGlowing(true);
+        blade.getDisplay().setGlowColorOverride(Color.fromRGB(1, 1, 1));
     }
 
     @Override
     public void onExit(UmbralBlade blade) {
+//        blade.setHitEntity(null);
+        blade.getDisplay().setGlowing(false);
         // TODO: Detach from target
         // TODO: Remove impalement effects
     }

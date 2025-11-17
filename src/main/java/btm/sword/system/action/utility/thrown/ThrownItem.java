@@ -5,6 +5,8 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
+import btm.sword.util.math.Basis;
+
 import org.bukkit.FluidCollisionMode;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -65,12 +67,20 @@ public class ThrownItem {
     protected Location origin;
     protected Location cur;
     protected Location prev;
+    protected Vector to; // cur - prev
     protected Vector velocity;
+
+    protected double timeScalingFactor = -1;
+    protected double timeCutoff = -1;
+
+    protected Basis currentBasis;
+
     protected double initialVelocity;
 
     int t = 0;
-    protected Function<Integer, Vector> positionFunction; // TODO: make pos and velocity funcs not hardcoded
-    protected Function<Integer, Vector> velocityFunction;
+
+    protected Function<Double, Vector> positionFunction;
+    protected Function<Double, Vector> velocityFunction;
 
     protected boolean grounded;
     protected Block stuckBlock;
@@ -95,15 +105,15 @@ public class ThrownItem {
         yDisplayOffset = 0.25f;
         zDisplayOffset = -0.1f;
 
-        setup(true, setupPeriod);
+        setup(setupPeriod);
     }
 
-    protected void setup(boolean firstTime, int period) {
+    protected void setup(int period) {
         new BukkitRunnable() {
             @Override
             public void run() {
                 if (setupSuccessful) {
-                    if (firstTime) afterSpawn();
+                    afterSpawn();
                     cancel();
                     return;
                 }
@@ -221,76 +231,37 @@ public class ThrownItem {
             }.runTaskLater(Sword.getInstance(), 2);
         }
 
-        // TODO: either just override the whole method in Umbral Blade or make this modular so that -
-        // New Functions for lunging and other umbral-blade specific logic can be performed
-        // For example -> the logic below is incorrect for handling umbral blade lunging/throwing.
-
-        Prefab.Sounds.THROW.play(thrower.entity());
-
-        thrower.setItemStackInHand(ItemStack.of(Material.AIR), true);
-        InteractiveItemArbiter.put(this);
+        generateFunctions(initialVelocity);
+        handleOnReleaseActions();
 
         xDisplayOffset = yDisplayOffset = zDisplayOffset = 0;
         determineOrientation();
 
-        //region <Physics calculations>
-        this.initialVelocity = initialVelocity;
-        LivingEntity ex = thrower.entity();
-        Location o = ex.getEyeLocation();
-        List<Vector> basis = VectorUtil.getBasisWithoutPitch(ex);
-        double phi = Math.toRadians(-1 * o.getPitch());
-        double cosPhi = Math.cos(phi);
-        double sinPhi = Math.sin(phi);
-        double forwardCoefficient = initialVelocity * cosPhi;
-        double upwardCoefficient = initialVelocity * sinPhi;
-        origin = o.add(basis.getFirst().multiply(ConfigManager.getInstance()
-                        .getPhysics().getThrownItems().getOriginOffsetForward()))
-                .add(basis.get(1).multiply(ConfigManager.getInstance()
-                        .getPhysics().getThrownItems().getOriginOffsetUp()))
-                .add(basis.getLast().multiply(ConfigManager.getInstance()
-                        .getPhysics().getThrownItems().getOriginOffsetBack()));
-        cur = origin.clone();
-        prev = cur.clone();
-        Vector flatDir = thrower.getFlatDir().rotateAroundY(ConfigManager.getInstance()
-                .getPhysics().getThrownItems().getTrajectoryRotation());
-        velocity = flatDir.clone();
-        Vector forwardVelocity = flatDir.clone().multiply(forwardCoefficient);
-        Vector upwardVelocity = Prefab.Direction.UP().multiply(upwardCoefficient);
-
-        double gravDamper = ConfigManager.getInstance().getPhysics().getThrownItems().getGravityDamper();
-
-        // TODO: make these as params in constructor or mke dynamic in some other way so that umbral blade can reassign it's funcs
-        positionFunction = t -> flatDir.clone().multiply(forwardCoefficient * t)
-                .add(Prefab.Direction.UP().multiply((upwardCoefficient * t) - (initialVelocity * (1 / gravDamper) * t * t)));
-
-        velocityFunction = t -> forwardVelocity.clone()
-                .add(upwardVelocity.clone().add(Prefab.Direction.UP().multiply(-initialVelocity * (2 / (gravDamper)) * t)));
-        //endregion
-
         new BukkitRunnable() {
             @Override
-            public void run() {
-                if (grounded || hit || caught || display.isDead()) {
+            public void run() {                                             // TODO: is this correct?
+                if (grounded || hit || caught || display.isDead() || (timeCutoff > 0 && t * timeScalingFactor > timeCutoff)) {
+                    String reason = grounded ? "grounded" :
+                        hit ? "hit" :
+                            caught ? "caught" :
+                                display.isDead() ? "display dead" :
+                                    (timeCutoff > 0 && t > timeCutoff) ? "time cutoff" :
+                                        "unknown";
+                    thrower.message("Ending due to: " + reason);
+
                     onEnd();
                     cancel();
                     return;
                 }
 
-                cur = origin.clone().add(positionFunction.apply(t));
-                velocity = velocityFunction.apply(t);
+                applyFunctions();
 
+                // TODO: still need to fix that nose not coming back down on fall for swords...
                 if (!prev.equals(cur) && cur.clone().subtract(prev).toVector().dot(velocity) > 0) {
                     DisplayUtil.smoothTeleport(display, 1);
                 }
 
-                String name = display.getItemStack().getType().toString();
-                if (name.endsWith("_SWORD")) {
-                    display.teleport(cur.setDirection(velocity));
-                }
-                else {
-                    display.teleport(cur.setDirection(basis.getLast()));
-                }
-
+                teleport();
                 rotate();
 
                 Prefab.Particles.THROW_TRAIl.display(cur);
@@ -302,6 +273,82 @@ public class ThrownItem {
                 t++; // Step time value forward for next iteration
             }
         }.runTaskTimer(Sword.getInstance(), 0L, 1L);
+    }
+
+    protected void teleport() {
+        String name = display.getItemStack().getType().toString();
+        if (name.endsWith("_SWORD")) {
+            display.teleport(cur.setDirection(velocity));
+        }
+        else {
+            display.teleport(cur.setDirection(currentBasis.forward()));
+        }
+    }
+
+    protected void applyFunctions() {
+        double time;
+        if (timeScalingFactor < 0) {
+            time = t;
+        }
+        else {
+            time = t * timeScalingFactor;
+        }
+        cur = origin.clone().add(positionFunction.apply(time));
+        velocity = velocityFunction.apply(time);
+    }
+
+    /**
+     * Play sounds and remove the item in the main hand of the player. Should be overridden for different logic.
+     */
+    protected void handleOnReleaseActions() {
+        Prefab.Sounds.THROW.play(thrower.entity());
+        thrower.setItemStackInHand(ItemStack.of(Material.AIR), true);
+        InteractiveItemArbiter.put(this);
+    }
+
+    protected void generateFunctions(double initialVelocity) {
+        calculatePhysicsFunctions(initialVelocity);
+    }
+    // TODO: ^^ correctly calc origin and direction for the non-physical trajectory
+    // TODO: make dynamic so targeted entity location is targeted.
+    private void calculatePhysicsFunctions(double initialVelocity) {
+        this.initialVelocity = initialVelocity;
+
+        LivingEntity ex = thrower.entity();
+        Location o = ex.getEyeLocation();
+        this.currentBasis = VectorUtil.getBasisWithoutPitch(ex);
+
+        // clamp the pitch between these values so that strange undefined vertical vector behavior doesn't occur.
+        double min = Math.toRadians(-89);
+        double max = Math.toRadians(89);
+        double phi = Math.max(min, Math.min(max, Math.toRadians(-1 * o.getPitch())));
+
+        double cosPhi = Math.cos(phi);
+        double sinPhi = Math.sin(phi);
+        double forwardCoefficient = initialVelocity * cosPhi;
+        double upwardCoefficient = initialVelocity * sinPhi;
+
+        origin = o.add(currentBasis.right().multiply(ConfigManager.getInstance()
+                .getPhysics().getThrownItems().getOriginOffsetForward()))
+            .add(currentBasis.up().multiply(ConfigManager.getInstance()
+                .getPhysics().getThrownItems().getOriginOffsetUp()))
+            .add(currentBasis.forward().multiply(ConfigManager.getInstance()
+                .getPhysics().getThrownItems().getOriginOffsetBack()));
+        cur = origin.clone();
+        prev = cur.clone();
+        Vector flatDir = thrower.getFlatDir().rotateAroundY(ConfigManager.getInstance()
+            .getPhysics().getThrownItems().getTrajectoryRotation());
+        velocity = flatDir.clone();
+        Vector forwardVelocity = flatDir.clone().multiply(forwardCoefficient);
+        Vector upwardVelocity = Prefab.Direction.UP().multiply(upwardCoefficient);
+
+        double gravDamper = ConfigManager.getInstance().getPhysics().getThrownItems().getGravityDamper();
+
+        positionFunction = t -> flatDir.clone().multiply(forwardCoefficient * t)
+            .add(Prefab.Direction.UP().multiply((upwardCoefficient * t) - (initialVelocity * (1 / gravDamper) * t * t)));
+
+        velocityFunction = t -> forwardVelocity.clone()
+            .add(upwardVelocity.clone().add(Prefab.Direction.UP().multiply(-initialVelocity * (2 / (gravDamper)) * t)));
     }
 
     /**
@@ -317,6 +364,7 @@ public class ThrownItem {
 
         var rotationSpeed = ConfigManager.getInstance().getPhysics().getThrownItems().getRotationSpeed();
 
+        // TODO: make more extensible somehow?
         if (name.endsWith("_SWORD")) {
             newRotation = curRotation.rotateZ((float) rotationSpeed.getSword());
         }
@@ -354,10 +402,11 @@ public class ThrownItem {
      * <p>
      * Delegates to the correct outcome handler depending on state flags.
      */
-    public void onEnd() {
+    protected void onEnd() {
         if (caught) onCatch();
         else if (hit) onHit();
         else if (grounded) onGrounded();
+        t = 0; // TODO: Make better reset method if this is not the only cleanup to perform
     }
 
     /**
@@ -388,7 +437,7 @@ public class ThrownItem {
             public void run() {
                 cur = marker.getLocation();
                 DisplayUtil.smoothTeleport(display, 1);
-                display.teleport(cur.clone().setDirection(velocityFunction.apply(t + 1)));
+                display.teleport(cur.clone().setDirection(velocityFunction.apply((double) t + 1)));
                 marker.remove();
             }
         }.runTaskLater(Sword.getInstance(), 1L);
@@ -416,13 +465,17 @@ public class ThrownItem {
         }.runTaskTimer(Sword.getInstance(), 1L, timingConfig.getDisposalCheckInterval());
     }
 
+
+
     /**
      * Handles logic when the thrown item successfully hits a living entity.
      * <p>
      * Manages impalement, knockback, pinning, and delayed disposal.
      */
-    public void onHit() {
+    public void onHit() { // TODO: break this method and all logic up...
         if (hitEntity == null) return;
+
+        thrower.message("onHit gets called.. Why no knockback for umbral blade");
 
         LivingEntity hit = hitEntity.entity();
         String name = display.getItemStack().getType().toString();
@@ -476,6 +529,12 @@ public class ThrownItem {
             new BukkitRunnable() {
                 @Override
                 public void run() {
+                    if (display == null || hitEntity == null) {
+                        disposeNaturally(); // TODO: remember me!
+                        cancel();
+                        return;
+                    }
+
                     if (display.isDead()) {
                         hitEntity.removeImpalement();
                         cancel();
@@ -508,7 +567,7 @@ public class ThrownItem {
      * <p>
      * Returns the item to inventory and disposes of the display.
      */
-    public void onCatch() {
+    protected void onCatch() {
         thrower.message("Caught it!");
         thrower.giveItem(display.getItemStack());
         dispose();
@@ -573,8 +632,14 @@ public class ThrownItem {
                         (entity instanceof LivingEntity l) &&
                         !l.isDead() &&
                         l.getType() != EntityType.ARMOR_STAND;
+        // Throwing a weapon should not immediately result in catching it, therefore a grace period is in place.
         int gracePeriod = ConfigManager.getInstance().getTiming().getThrownItems().getCatchGracePeriod();
         return t < gracePeriod ? entity -> filter.test(entity) && entity.getUniqueId() != thrower.getUniqueId() : filter;
+    }
+
+    public void setFunctions(Function<Double, Vector> positionFunction, Function<Double, Vector> velocityFunction) {
+        this.positionFunction = positionFunction;
+        this.velocityFunction = velocityFunction;
     }
 
     /**
@@ -639,7 +704,8 @@ public class ThrownItem {
         var impalementConfig = ConfigManager.getInstance().getCombat().getImpalement();
         boolean followHead = !impalementConfig.getHeadFollowExceptions().contains(hitEntity.entity().getType())
                 && heightOffset >= diff * impalementConfig.getHeadZoneRatio();
-        DisplayUtil.itemDisplayFollow(hitEntity, display,  velocity.clone().normalize(), heightOffset, followHead);
+        DisplayUtil.itemDisplayFollow(hitEntity, display,  velocity.clone().normalize(), heightOffset, followHead,
+            null, null, null, null);
     }
 
     /**
@@ -648,6 +714,8 @@ public class ThrownItem {
      * Used after hitting entities or ending its trajectory naturally.
      */
     public void disposeNaturally() {
+        if (display == null) return;
+
         final Location dropLocation = hitEntity != null ? hitEntity.entity().getLocation() : display.getLocation();
         Item dropped = dropLocation.getWorld().dropItemNaturally(dropLocation, display.getItemStack());
         new BukkitRunnable() {
@@ -668,7 +736,9 @@ public class ThrownItem {
      * Should be called when the thrown item is collected or deleted.
      */
     public void dispose() {
-        display.remove();
+        if (display != null) {
+            display.remove();
+        }
         if (disposeTask != null && !disposeTask.isCancelled()) disposeTask.cancel();
     }
 }

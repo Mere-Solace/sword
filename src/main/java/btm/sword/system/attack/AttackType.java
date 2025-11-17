@@ -41,14 +41,14 @@ public enum AttackType {
             new Vector(3.26, 0.79, -0.4),
             new Vector(-2.3, -0.16,3),
             new Vector(1.9, 0.21, 5)),
-        attack -> attack.getRightVector().multiply(-1).add(attack.getForwardVector().multiply(0.5))
+        attack -> attack.getRightVector().multiply(-0.5).add(attack.getForwardVector().multiply(0.1))
     ),
     SLASH2(List.of(
         new Vector(2.6, -1.21, -1.2),
             new Vector(-1.47, 1.99, 0),
             new Vector(1.6, -0.11, 7),
             new Vector(-3.66, 0.26, 1.85)),
-        attack -> attack.getRightVector().add(attack.getForwardVector().multiply(0.5))
+        attack -> attack.getRightVector().multiply(0.5).add(attack.getForwardVector().multiply(0.1))
     ),
     SLASH3(List.of(
         new Vector(-0.15,2.8,-1.5),
@@ -66,7 +66,13 @@ public enum AttackType {
         attack -> Prefab.Direction.UP().multiply(5)
     ),
 
-//    LUNGE1(Prefab.ControlVectors.UP_SMASH),
+    LUNGE1(List.of(
+        new Vector(-0.4,0.9,1),
+        new Vector(0,0,10),
+        new Vector(-1.9,0.3,2.24),
+        new Vector(0,-0.3,0.7)),
+        attack -> new Vector()
+    ),
 
     D_AIR(List.of(
         new Vector(-0.35, 2.53, 0.56),
@@ -106,7 +112,7 @@ public enum AttackType {
     private final Function<Attack, Vector> knockbackFunction;
 
     AttackType(List<Vector> ctrlVectors) {
-        this(ctrlVectors, Prefab.Function.DEFAULT_KNOCKBACK);
+        this(ctrlVectors, Prefab.Instruction.DEFAULT_KNOCKBACK);
     }
 
     AttackType(List<Vector> ctrlVectors, Function<Attack, Vector> knockback) {

@@ -3,14 +3,18 @@ package btm.sword.system.action;
 import btm.sword.system.entity.types.Combatant;
 import btm.sword.system.entity.umbral.UmbralBlade;
 import btm.sword.system.entity.umbral.input.BladeRequest;
+import btm.sword.system.entity.umbral.statemachine.state.WieldState;
 
 public class UmbralBladeAction extends SwordAction {
     // TODO: Wielding when not holding blade should attack
-    public static void wieldUmbralBlade(Combatant wielder) {
+    public static void wield(Combatant wielder) {
         UmbralBlade blade = wielder.getUmbralBlade();
         if (blade == null) return;
 
         if (wielder.holdingUmbralItemInMainHand()) {
+            if (blade.inState(WieldState.class)) {
+                blade.request(BladeRequest.ATTACK_QUICK);
+            }
             blade.request(BladeRequest.WIELD);
         }
         else {
@@ -18,21 +22,21 @@ public class UmbralBladeAction extends SwordAction {
         }
     }
 
-    public static void toggleUmbralBlade(Combatant wielder) {
+    public static void toggle(Combatant wielder) {
         UmbralBlade blade = wielder.getUmbralBlade();
         if (blade == null) return;
 
         blade.request(BladeRequest.TOGGLE);
     }
 
-    public static void performQuickAttack(Combatant wielder) {
+    public static void lunge(Combatant wielder) {
         UmbralBlade blade = wielder.getUmbralBlade();
         if (blade == null) return;
 
-        blade.request(BladeRequest.ATTACK_QUICK);
+        blade.request(BladeRequest.LUNGE);
     }
 
-    public static void recallBlade(Combatant wielder) {
+    public static void recall(Combatant wielder) {
         UmbralBlade blade = wielder.getUmbralBlade();
         if (blade == null) return;
 

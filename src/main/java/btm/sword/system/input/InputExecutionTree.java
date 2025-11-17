@@ -332,7 +332,8 @@ public class InputExecutionTree {
         add(List.of(InputType.LEFT),
                 new InputAction(
                         executor -> AttackAction.basicAttack(executor, AttackType.SLASH1, true),
-                        executor -> Math.max(0, (executor.getTimeOfLastAttack() + executor.getDurationOfLastAttack()) - System.currentTimeMillis()),
+                        executor ->
+                            Math.max(0, (executor.getTimeOfLastAttack() + executor.getDurationOfLastAttack()) - System.currentTimeMillis()),
                         Combatant::canPerformAction,
                         true,
                         true),
@@ -345,7 +346,7 @@ public class InputExecutionTree {
                         executor -> AttackAction.basicAttack(executor, AttackType.SLASH2, true),
                         executor -> 0L,
                         Combatant::canPerformAction,
-                        false,
+                        true,
                         true),
                 true,
                 true,
@@ -356,7 +357,7 @@ public class InputExecutionTree {
                         executor -> AttackAction.basicAttack(executor, AttackType.SLASH3, true),
                         executor -> 0L,
                         Combatant::canPerformAction,
-                        false,
+                        true,
                         true),
                 true,
                 true,
@@ -405,28 +406,38 @@ public class InputExecutionTree {
         // Most umbral blade actions will require the player to be holding the soul link item, though.
         add(List.of(InputType.DROP, InputType.SWAP),
                 new InputAction(
-                        UmbralBladeAction::toggleUmbralBlade,
+                        UmbralBladeAction::toggle,
                         executor -> 400L,
                         Combatant::canPerformAction,
                         true,
                         true),
                 true,
                 true,
-                true
-                );
+                true);
 
         // wield it
         add(List.of(InputType.SWAP, InputType.LEFT),
             new InputAction(
-                    UmbralBladeAction::wieldUmbralBlade,
+                    UmbralBladeAction::wield,
                     executor -> 400L,
                     Combatant::canPerformAction,
                     true,
                     true),
             true,
             true,
-            true
-        );
+            true);
+
+        // lunge (umbral throw action)
+        add(List.of(InputType.SHIFT, InputType.SWAP),
+            new InputAction(
+                UmbralBladeAction::lunge,
+                executor -> 400L,
+                Combatant::canPerformAction,
+                true,
+                true),
+            true,
+            true,
+            true);
     }
 
     /**

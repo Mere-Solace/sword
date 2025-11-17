@@ -6,7 +6,7 @@ import btm.sword.system.entity.umbral.UmbralBlade;
 import btm.sword.system.entity.umbral.statemachine.state.AttackingQuickState;
 
 public class UmbralBladeAttack extends ItemDisplayAttack {
-    private UmbralBlade blade;
+    protected UmbralBlade blade;
 
     public UmbralBladeAttack(ItemDisplay weaponDisplay, AttackType type, boolean orientWithPitch, boolean displayOnly, int tpDuration, int displaySteps, int attackStepsPerDisplayStep, int attackMilliseconds, double attackStartValue, double attackEndValue) {
         super(weaponDisplay, type, orientWithPitch, displayOnly, tpDuration, displaySteps, attackStepsPerDisplayStep, attackMilliseconds, attackStartValue, attackEndValue);

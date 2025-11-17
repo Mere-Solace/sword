@@ -1,5 +1,7 @@
 package btm.sword.util.display;
 
+import java.util.Objects;
+import java.util.function.Consumer;
 import java.util.function.Predicate;
 
 import org.bukkit.Bukkit;
@@ -113,7 +115,8 @@ public class DisplayUtil {
      * @param heightOffset vertical height offset from the entity's location
      * @param followHead whether to align the display's direction to the entity's head yaw instead of body yaw
      */
-    public static void itemDisplayFollow(SwordEntity entity, ItemDisplay itemDisplay, Vector direction, double heightOffset, boolean followHead) {
+    public static <T> void itemDisplayFollow(SwordEntity entity, ItemDisplay itemDisplay, Vector direction, double heightOffset, boolean followHead,
+                                             Predicate<T> condition, T toTest, Consumer<T> callback, T toConsume) {
         double originalYaw = Math.toRadians(entity.entity().getBodyYaw());
         Vector offset = Prefab.Direction.UP().multiply(heightOffset);
 
@@ -128,6 +131,14 @@ public class DisplayUtil {
                 if (entity.isDead() || itemDisplay.isDead() || itemDisplay.getItemStack().getType().isAir()) {
                     cancel();
                 }
+
+                if (condition != null && toTest != null && condition.test(toTest)) {
+                    // TODO: remove
+                    Objects.requireNonNull(Bukkit.getPlayer("BladeSworn")).sendMessage("Condition satisfied, no longer in Lodged state");
+                    if (callback != null && toConsume != null) callback.accept(toConsume);
+                    cancel();
+                }
+
                 Location l = entity.entity().getLocation().add(offset);
 
                 double yawRads = Math.toRadians(followHead ? entity.entity().getYaw() : entity.entity().getBodyYaw());

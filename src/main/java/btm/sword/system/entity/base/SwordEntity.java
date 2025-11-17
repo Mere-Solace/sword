@@ -5,6 +5,8 @@ import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 
+import btm.sword.util.math.Basis;
+
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.entity.ArmorStand;
@@ -98,8 +100,8 @@ public abstract class SwordEntity {
 
     protected boolean ableToPickup;
 
-    protected List<Vector> currentEyeDirectionBasis;
-    protected List<Vector> currentBodyDirectionBasis;
+    protected Basis currentEyeDirectionBasis;
+    protected Basis currentBodyDirectionBasis;
     protected long timeOfLastEyeBasisCalculation;
     protected long timeOfLastBodyBasisCalculation;
 
@@ -693,28 +695,28 @@ public abstract class SwordEntity {
     public Vector rightBasisVector(boolean withPitch) {
         if (withPitch) {
             calcEyeDirBasis();
-            return currentEyeDirectionBasis.getFirst().clone();
+            return currentEyeDirectionBasis.right();
         }
         calcBodyDirBasis();
-        return currentBodyDirectionBasis.getFirst().clone();
+        return currentBodyDirectionBasis.right();
     }
 
     public Vector upBasisVector(boolean withPitch) {
         if (withPitch) {
             calcEyeDirBasis();
-            return currentEyeDirectionBasis.get(1).clone();
+            return currentEyeDirectionBasis.up();
         }
         calcBodyDirBasis();
-        return currentBodyDirectionBasis.get(1).clone();
+        return currentBodyDirectionBasis.up();
     }
 
     public Vector forwardBasisVector(boolean withPitch) {
         if (withPitch) {
             calcEyeDirBasis();
-            return currentEyeDirectionBasis.getLast().clone();
+            return currentEyeDirectionBasis.forward();
         }
         calcBodyDirBasis();
-        return currentBodyDirectionBasis.getLast().clone();
+        return currentBodyDirectionBasis.forward();
     }
 
     private void calcEyeDirBasis() {
@@ -740,13 +742,13 @@ public abstract class SwordEntity {
     }
 
     public void drawBasis() {
-        List<Vector> testBasis = VectorUtil.getBasisWithoutPitch(entity());
+        Basis testBasis = VectorUtil.getBasisWithoutPitch(entity());
         DrawUtil.line(List.of(Prefab.Particles.TEST_SWORD_BLUE),
-                entity().getEyeLocation(), testBasis.getFirst(), 4, 0.25);
+                entity().getEyeLocation(), testBasis.right(), 4, 0.25);
         DrawUtil.line(List.of(Prefab.Particles.TEST_SWORD_BLUE),
-                entity().getEyeLocation(), testBasis.get(1), 4, 0.25);
+                entity().getEyeLocation(), testBasis.up(), 4, 0.25);
         DrawUtil.line(List.of(Prefab.Particles.TEST_SWORD_BLUE),
-                entity().getEyeLocation(), testBasis.getLast(), 4, 0.25);
+                entity().getEyeLocation(), testBasis.forward(), 4, 0.25);
     }
 
     public Vector getChestVector() {

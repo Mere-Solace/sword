@@ -79,20 +79,21 @@ public class InteractiveItemArbiter {
      * @param executor The combatant performing the grab.
      */
     public static void onGrab(ItemDisplay display, Combatant executor) {
-        ThrownItem thrownItem = remove(display, true); // Stop displaying the ItemDisplay
+        ThrownItem thrownItem = remove(display, false); // Stop displaying the ItemDisplay
         if (thrownItem == null) return;
 
         ItemStack item = display.getItemStack();
 
         if (!item.isEmpty()) {
             if (thrownItem instanceof UmbralBlade umbralBlade) {
-                if (!umbralBlade.isOwnedBy(executor)) {
-                    // TODO maybe play some cool rejection animation here
-                    return;
-                }
+                // TODO: remove ->
+                executor.message("Harro, dis is umbral blade!");
 
-                umbralBlade.returnToWielderAndRequestState(BladeRequest.SHEATH); // TODO add umbral blade onPickup()
+                umbralBlade.onGrab(executor);
                 return;
+            }
+            else {
+                thrownItem.dispose();
             }
 
             executor.giveItem(item);

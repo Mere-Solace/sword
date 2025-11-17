@@ -9,8 +9,11 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
+import btm.sword.util.math.Basis;
+
 import org.bukkit.Location;
 import org.bukkit.Particle;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.util.RayTraceResult;
@@ -57,7 +60,7 @@ public class Attack extends SwordAction implements Runnable {
     protected Vector to; // the vector from the previous vector TO the current bezier vector
 
     protected final HashSet<LivingEntity> hitDuringAttack;
-    protected Predicate<LivingEntity> filter;
+    protected Predicate<Entity> filter;
     @Getter
     protected SwordEntity currentTarget;
 
@@ -74,6 +77,7 @@ public class Attack extends SwordAction implements Runnable {
 
     protected Runnable callback;
     protected int msBeforeCallbackSchedule;
+    protected boolean finishedOrCanceled = false;
 
     protected Consumer<SwordEntity> onHitInstructions;
 
@@ -140,9 +144,11 @@ public class Attack extends SwordAction implements Runnable {
         this.attacker = attacker;
 
         this.attackingEntity = attacker.entity();
-        this.filter = livingEntity -> livingEntity != attackingEntity &&
-                livingEntity.getUniqueId() != attacker.getUniqueId() &&
-                livingEntity.isValid();
+        this.filter = entity ->
+            entity instanceof LivingEntity livingEntity &&
+            livingEntity != attackingEntity &&
+            livingEntity.getUniqueId() != attacker.getUniqueId() &&
+            livingEntity.isValid();
 
         cast(attacker, 5, this);
     }
@@ -190,12 +196,17 @@ public class Attack extends SwordAction implements Runnable {
         calcTickValues();
 
         curIteration = 0;
-        for (int i = 0; i <= attackIterations; i++) {
+        for (int i = 0; i <= attackIterations; i++) { // TODO: research a better way than scheduling all at once with delays...
             final int idx = i;
             SwordScheduler.runBukkitTaskLater(
                 new BukkitRunnable() {
                 @Override
                 public void run() {
+                    if (finishedOrCanceled) {
+                        cancel();
+                        return;
+                    }
+
                     applyConsistentEffects();
 
                     cur = weaponPathFunction.apply(attackStartValue + (step * idx));
@@ -214,7 +225,6 @@ public class Attack extends SwordAction implements Runnable {
                                 new BukkitRunnable() {
                                     @Override
                                     public void run() {
-                                        prepareForNextUse();
                                         nextAttack.execute(attacker);
                                     }
                                 }, millisecondDelayBeforeNextAttack, TimeUnit.MILLISECONDS
@@ -232,12 +242,6 @@ public class Attack extends SwordAction implements Runnable {
         if (callback != null) {
             SwordScheduler.runBukkitTaskLater(callback, msBeforeCallbackSchedule, TimeUnit.MILLISECONDS);
         }
-    }
-
-    // TODO: Either remove this, or make attack a consumable class and never re-use. it gets a little messy for some reason.
-    private void prepareForNextUse() {
-        hitDuringAttack.clear();
-        origin = null;
     }
 
     void determineOrigin() {
@@ -302,7 +306,7 @@ public class Attack extends SwordAction implements Runnable {
         RayTraceResult result = attackingEntity.getWorld().rayTraceBlocks(attackLocation, direction, 0.3);
         if (result != null) {
             // enter ground particles
-            new ParticleWrapper(Particle.BLOCK, 10, 0.5, 0.5, 0.5,
+            new ParticleWrapper(Particle.BLOCK, 5, 0.5, 0.5, 0.5,
                     Objects.requireNonNull(result.getHitBlock()).getBlockData()).display(attackLocation);
             Prefab.Particles.COLLIDE.display(attackLocation);
             // potential reduction of damage formula
@@ -315,12 +319,12 @@ public class Attack extends SwordAction implements Runnable {
 
     // static function oriented with the players current basis to be used when the attack is executed.
     void generateBezierFunction() {
-        ArrayList<Vector> basis = orientWithPitch ?
+        Basis basis = orientWithPitch ?
                 VectorUtil.getBasis(attackingEntity.getEyeLocation(), attackingEntity.getEyeLocation().getDirection()) :
                 VectorUtil.getBasisWithoutPitch(attackingEntity);
-        curRight = basis.getFirst();
-        curUp = basis.get(1);
-        curForward = basis.getLast();
+        curRight = basis.right();
+        curUp = basis.up();
+        curForward = basis.forward();
 
         List<Vector> adjusted = BezierUtil.adjustCtrlToBasis(basis, controlVectors, rangeMultiplier);
         weaponPathFunction = BezierUtil.cubicBezier3D(adjusted.get(0), adjusted.get(1), adjusted.get(2), adjusted.get(3));

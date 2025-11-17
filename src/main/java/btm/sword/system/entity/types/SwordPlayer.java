@@ -394,7 +394,7 @@ public class SwordPlayer extends Combatant {
     public void displayDisablingEffect() {
         self.showTitle(Title.title(
                 Component.text(""),
-                Component.text("ur disabled", NamedTextColor.DARK_GRAY, TextDecoration.ITALIC),
+                Component.text("*}- Disabled -{*", NamedTextColor.DARK_GRAY, TextDecoration.ITALIC),
                 Title.Times.times(
                         Duration.ofMillis(0),
                         Duration.ofMillis(inputTimeoutMillis),

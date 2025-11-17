@@ -1,40 +1,11 @@
 package btm.sword.system.entity.umbral.statemachine.state;
 
+import btm.sword.system.attack.AttackType;
 import btm.sword.system.entity.umbral.UmbralBlade;
 import btm.sword.system.entity.umbral.statemachine.UmbralStateFacade;
 
-/**
- * State where the UmbralBlade is lunging toward a target.
- * <p>
- * In this state, the blade rapidly travels toward a targeted entity,
- * typically to impale or strike them. This is a high-mobility attack
- * that closes distance quickly.
- * </p>
- * <p>
- * <b>Entry Actions:</b>
- * <ul>
- *   <li>Stop idle movement</li>
- *   <li>Set display transformation for lunge</li>
- *   <li>Begin rapid movement toward target</li>
- *   <li>Enable smooth teleport for visual trail</li>
- * </ul>
- * </p>
- * <p>
- * <b>Exit Actions:</b>
- * <ul>
- *   <li>Stop lunge movement</li>
- * </ul>
- * </p>
- * <p>
- * <b>Typical Transitions:</b>
- * <ul>
- *   <li>LUNGING → LODGED (blade hits and embeds in target)</li>
- *   <li>LUNGING → WAITING (lunge completes without lodging)</li>
- *   <li>LUNGING → FLYING (lunge misses, continues flying)</li>
- * </ul>
- * </p>
- *
- */
+import org.bukkit.Color;
+
 public class LungingState extends UmbralStateFacade {
     @Override
     public String name() {
@@ -43,19 +14,24 @@ public class LungingState extends UmbralStateFacade {
 
     @Override
     public void onEnter(UmbralBlade blade) {
-        blade.endIdleMovement();
-        // TODO: Implement lungeToTarget logic when target system is ready
+        blade.setFinishedLunging(false);
+        blade.setTimeScalingFactor(1.0/10); // TODO: for bezier curve throws, the denom is just # its, make method take in that val instead
+        blade.setTimeCutoff(1.2);
+        blade.setCtrlPointsForLunge(AttackType.LUNGE1.controlVectors());
+        blade.onRelease(1);
 
+        blade.getDisplay().setGlowing(true);
+        blade.getDisplay().setGlowColorOverride(Color.fromRGB(1, 1, 1));
     }
 
     @Override
     public void onExit(UmbralBlade blade) {
-        // Stop lunge movement
+        blade.setFinishedLunging(false);
+        blade.getDisplay().setGlowing(false);
     }
 
     @Override
     public void onTick(UmbralBlade blade) {
-        // Monitor lunge progress
-        // Check for collision with target or obstacles
+//        blade.getThrower().message("Finished lunging?: " + blade.isFinishedLunging());
     }
 }

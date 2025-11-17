@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import btm.sword.util.math.Basis;
+
 import org.bukkit.entity.ItemDisplay;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.util.Vector;
@@ -137,12 +139,12 @@ public class ItemDisplayAttack extends Attack {
 
     @Override
     void generateBezierFunction() {
-        ArrayList<Vector> basis = orientWithPitch ?
+        Basis basis = orientWithPitch ?
             VectorUtil.getBasis(origin, origin.getDirection()) :
             VectorUtil.getBasisWithoutPitch(origin);
-        curRight = basis.getFirst();
-        curUp = basis.get(1);
-        curForward = basis.getLast();
+        curRight = basis.right();
+        curUp = basis.up();
+        curForward = basis.forward();
 
         List<Vector> adjusted = BezierUtil.adjustCtrlToBasis(basis, controlVectors, rangeMultiplier);
         weaponPathFunction = BezierUtil.cubicBezier3D(adjusted.get(0), adjusted.get(1), adjusted.get(2), adjusted.get(3));

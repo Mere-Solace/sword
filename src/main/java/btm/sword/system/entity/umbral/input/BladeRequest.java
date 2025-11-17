@@ -8,6 +8,7 @@ public enum BladeRequest {
     ATTACK_QUICK,
     ATTACK_HEAVY,
     LUNGE,
+    IMPALE,
     RECALL,
     ACTIVATE_TO_PREVIOUS,
     ACTIVATE_AS_SHEATHED,

@@ -51,7 +51,7 @@ public class MovementAction extends SwordAction {
      *
      * @param executor The combatant performing the dash.
      * @param forward  True for forward dash, false for backward dash.
-     */
+     */ // TODO: This method is illegible...
     public static void dash(Combatant executor, boolean forward) {
         MovementConfig cfg = ConfigManager.getInstance().getMovement();
         double maxDistance = cfg.getDashMaxDistance();
@@ -64,7 +64,7 @@ public class MovementAction extends SwordAction {
                 boolean onGround = executor.isGrounded();
                 Location o = ex.getEyeLocation();
 
-                PotionEffect speed = new PotionEffect(PotionEffectType.SPEED, 3, 1);
+                PotionEffect speed = new PotionEffect(PotionEffectType.SPEED, 5, 3);
                 ex.addPotionEffect(speed);
 
                 // check for an item that may be the target of the dash
