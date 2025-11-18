@@ -6,6 +6,8 @@ import btm.sword.system.attack.AttackType;
 import btm.sword.system.entity.umbral.UmbralBlade;
 import btm.sword.system.entity.umbral.statemachine.UmbralStateFacade;
 
+// TODO: n # of lunges allowed before returning. Still want to keep combat centered around the player.
+// Also, make umbral attacks consume soulfire, and have a lunge slash too that doesn't impale.
 public class LungingState extends UmbralStateFacade {
     @Override
     public String name() {

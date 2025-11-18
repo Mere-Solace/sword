@@ -18,6 +18,13 @@ import btm.sword.util.Prefab;
  */
 public class VectorUtil {
     public static Basis getBasis(Location origin, Vector dir) {
+        dir.normalize();
+        if (dir.isZero()) // just in case, return a default basis
+            return new Basis(
+                Prefab.Direction.UP().crossProduct(Prefab.Direction.SOUTH()),
+                Prefab.Direction.UP(),
+                Prefab.Direction.SOUTH());
+
         Vector ref = new Vector(0,1,0);
         Vector right = null;
 

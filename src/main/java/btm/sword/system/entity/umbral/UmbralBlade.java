@@ -303,7 +303,7 @@ public class UmbralBlade extends ThrownItem {
         bladeStateMachine.addTransition(new Transition<>(
             ReturningState.class,
             LungingState.class,
-            blade -> false,
+            blade -> isRequestedAndActive(BladeRequest.LUNGE), // TODO: test this
             blade -> {}
         ));
 
@@ -535,9 +535,8 @@ public class UmbralBlade extends ThrownItem {
 
     // TODO: Make item Display changes look less jerky
 
-    // TODO make a stronger and more dynamic verison of this ( could return the task if need be)
-    public void returnToWielderAndRequestState(BladeRequest request) {
-        BukkitTask lerpTask = DisplayUtil.displaySlerpToOffset(thrower, display,
+    public BukkitTask returnToWielderAndRequestState(BladeRequest request) {
+        return DisplayUtil.displaySlerpToOffset(thrower, display,
             thrower.getChestVector(), 1.75, 5, 2, 0.8, false,
             new BukkitRunnable() {
                 @Override
@@ -685,7 +684,7 @@ public class UmbralBlade extends ThrownItem {
     }
 
     protected void calcBezierTrajectory() {
-        SwordEntity target = thrower.getTargetedEntity(11);
+        SwordEntity target = thrower.getTargetedEntity(20);
 
         origin = display.getLocation();
         cur = origin.clone();
@@ -693,10 +692,12 @@ public class UmbralBlade extends ThrownItem {
 
         Vector dir;
         if (target == null) {
-            Location intent = thrower.entity().getEyeLocation().add(thrower.getEyeDirection().multiply(11));
+            Location intent = thrower.entity().getEyeLocation().add(thrower.getEyeDirection().multiply(20));
             dir = intent.toVector().subtract(display.getLocation().toVector());
         }
         else {
+            DrawUtil.secant(List.of(Prefab.Particles.TEST_SPARKLE), display.getLocation(), target.getChestLocation(), 0.5);
+
             dir = target.getChestLocation().toVector().subtract(display.getLocation().toVector());
         }
         this.currentBasis = VectorUtil.getBasis(display.getLocation().setDirection(dir), dir);

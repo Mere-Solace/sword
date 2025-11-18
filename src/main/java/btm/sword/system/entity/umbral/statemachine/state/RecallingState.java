@@ -2,6 +2,7 @@ package btm.sword.system.entity.umbral.statemachine.state;
 
 import org.bukkit.Location;
 import org.bukkit.scheduler.BukkitRunnable;
+import org.bukkit.scheduler.BukkitTask;
 import org.bukkit.util.Vector;
 
 import btm.sword.Sword;
@@ -38,6 +39,8 @@ public class RecallingState extends UmbralStateFacade {
     private static final double EPS_SQ = 0.0004; // tune: 0.02^2  (very small)
     private static final int REQUIRED_STATIONARY_TICKS = 3;
 
+    private BukkitTask returnTask;
+
     @Override
     public String name() {
         return "RECALLING";
@@ -49,13 +52,17 @@ public class RecallingState extends UmbralStateFacade {
         new BukkitRunnable() {
             @Override
             public void run() {
-                blade.returnToWielderAndRequestState(BladeRequest.STANDBY);
+                returnTask = blade.returnToWielderAndRequestState(BladeRequest.STANDBY);
             }
         }.runTaskLater(Sword.getInstance(), 10);
     }
 
     @Override
-    public void onExit(UmbralBlade blade) { }
+    public void onExit(UmbralBlade blade) {
+        if (returnTask != null && !returnTask.isCancelled() && returnTask.getTaskId() != -1) {
+            returnTask.cancel();
+        }
+    }
 
     @Override
     public void onTick(UmbralBlade blade) {
@@ -64,15 +71,15 @@ public class RecallingState extends UmbralStateFacade {
         // wait initial grace period for return animation to run
         if (t <= 15) return;
 
-        Location nowLoc = blade.getDisplay().getLocation();
+        Location cur = blade.getDisplay().getLocation();
 
         if (previousBladeLocation == null) {
-            previousBladeLocation = nowLoc.clone();
+            previousBladeLocation = cur.clone();
             stationaryCount = 0;
             return;
         }
 
-        Vector delta = nowLoc.toVector().clone().subtract(previousBladeLocation.toVector());
+        Vector delta = cur.toVector().clone().subtract(previousBladeLocation.toVector());
         if (delta.lengthSquared() < EPS_SQ) {
             stationaryCount++;
             if (stationaryCount >= REQUIRED_STATIONARY_TICKS) {
@@ -82,7 +89,6 @@ public class RecallingState extends UmbralStateFacade {
             stationaryCount = 0;
         }
 
-        // update previous each tick so delta is between adjacent samples
-        previousBladeLocation = nowLoc.clone();
+        previousBladeLocation = cur.clone();
     }
 }
