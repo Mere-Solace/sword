@@ -1,14 +1,19 @@
 package btm.sword.system.action;
 
-import btm.sword.config.ConfigManager;
-import btm.sword.system.action.type.AttackType;
-import btm.sword.system.attack.Attack;
-import btm.sword.system.entity.types.Combatant;
-import btm.sword.system.entity.types.SwordPlayer;
-import btm.sword.util.display.Prefab;
-import java.util.*;
+import java.util.Map;
+
 import org.apache.logging.log4j.util.TriConsumer;
 import org.bukkit.Material;
+import org.bukkit.inventory.ItemStack;
+
+import btm.sword.config.ConfigManager;
+import btm.sword.system.attack.Attack;
+import btm.sword.system.attack.AttackType;
+import btm.sword.system.entity.types.Combatant;
+import btm.sword.system.entity.types.SwordPlayer;
+import btm.sword.system.entity.umbral.input.BladeRequest;
+import btm.sword.system.item.KeyRegistry;
+import btm.sword.util.Prefab;
 
 /**
  * Provides attack-related actions for {@link Combatant} entities.
@@ -36,12 +41,21 @@ public class AttackAction extends SwordAction {
      * @param type The type of attack being performed.
      */
     public static void basicAttack(Combatant executor, AttackType type, boolean orientWithPitch) {
-        Material item = executor.getItemTypeInHand(true);
-        double dot = executor.entity().getEyeLocation().getDirection().dot(Prefab.Direction.UP);
+        ItemStack itemStack = executor.getItemStackInHand(true);
+        Material itemType = itemStack.getType();
+
+        // TODO: todo link from the umbral Blade todo in input execution tree.
+        // handle potential umbral blade usage
+        if (KeyRegistry.hasKey(itemStack, KeyRegistry.SOUL_LINK_KEY) &&
+                executor.getUmbralBlade() != null) {
+            executor.requestUmbralBladeState(BladeRequest.ATTACK_QUICK);
+        }
+
+        double dot = executor.entity().getEyeLocation().getDirection().dot(Prefab.Direction.UP());
 
         if (executor.isGrounded()) {
             for (var entry : attackMap.entrySet()) {
-                if (item.name().endsWith(entry.getKey())) {
+                if (itemType.name().endsWith(entry.getKey())) {
                     entry.getValue().accept(executor, type, orientWithPitch);
                     return;
                 }
@@ -55,7 +69,7 @@ public class AttackAction extends SwordAction {
             if (dot < downAirThreshold) attackType = AttackType.D_AIR;
 
             for (var entry : attackMap.entrySet()) {
-                if (item.name().endsWith(entry.getKey())) {
+                if (itemType.name().endsWith(entry.getKey())) {
                     entry.getValue().accept(executor, attackType, true);
                     return;
                 }
@@ -63,7 +77,7 @@ public class AttackAction extends SwordAction {
         }
     }
 
-    public static void basicSlash(Combatant executor, AttackType type, boolean orientWithPitch) {
+    public static void basicSlash(Combatant executor, AttackType type, Boolean orientWithPitch) {
         new Attack(type, orientWithPitch).execute(executor);
     }
 }

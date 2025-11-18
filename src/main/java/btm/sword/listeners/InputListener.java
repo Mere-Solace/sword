@@ -1,5 +1,19 @@
 package btm.sword.listeners;
 
+import java.util.function.Consumer;
+
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.Listener;
+import org.bukkit.event.block.Action;
+import org.bukkit.event.player.PlayerDropItemEvent;
+import org.bukkit.event.player.PlayerInteractAtEntityEvent;
+import org.bukkit.event.player.PlayerInteractEntityEvent;
+import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.event.player.PlayerItemHeldEvent;
+import org.bukkit.event.player.PlayerSwapHandItemsEvent;
+import org.bukkit.event.player.PlayerToggleSneakEvent;
+import org.bukkit.inventory.ItemStack;
+
 import btm.sword.Sword;
 import btm.sword.system.SwordScheduler;
 import btm.sword.system.action.utility.thrown.ThrowAction;
@@ -7,14 +21,8 @@ import btm.sword.system.entity.SwordEntityArbiter;
 import btm.sword.system.entity.types.SwordPlayer;
 import btm.sword.system.input.InputType;
 import btm.sword.system.item.KeyRegistry;
-import btm.sword.util.InputUtil;
+import btm.sword.util.entity.InputUtil;
 import io.papermc.paper.event.player.PrePlayerAttackEntityEvent;
-import java.util.function.Consumer;
-import org.bukkit.event.EventHandler;
-import org.bukkit.event.Listener;
-import org.bukkit.event.block.Action;
-import org.bukkit.event.player.*;
-import org.bukkit.inventory.ItemStack;
 
 /**
  * Handles all player input events and routes them through the {@link SwordPlayer}

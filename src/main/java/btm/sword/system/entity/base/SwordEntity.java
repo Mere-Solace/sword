@@ -1,27 +1,20 @@
 package btm.sword.system.entity.base;
 
-import btm.sword.Sword;
-import btm.sword.system.combat.Affliction;
-import btm.sword.system.entity.aspect.AspectType;
-import btm.sword.system.entity.types.Combatant;
-import btm.sword.util.display.Prefab;
-import btm.sword.util.entity.EntityUtil;
-import btm.sword.util.sound.SoundType;
-import btm.sword.util.sound.SoundUtil;
-import com.destroystokyo.paper.event.entity.EntityRemoveFromWorldEvent;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
-import lombok.Getter;
-import lombok.Setter;
-import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.TextComponent;
-import net.kyori.adventure.text.format.NamedTextColor;
-import net.kyori.adventure.text.format.TextColor;
-import net.kyori.adventure.text.format.TextDecoration;
+
 import org.bukkit.Location;
 import org.bukkit.Material;
-import org.bukkit.entity.*;
+import org.bukkit.entity.ArmorStand;
+import org.bukkit.entity.Display;
+import org.bukkit.entity.Entity;
+import org.bukkit.entity.EntityType;
+import org.bukkit.entity.Item;
+import org.bukkit.entity.LivingEntity;
+import org.bukkit.entity.Player;
+import org.bukkit.entity.TextDisplay;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
 import org.bukkit.scheduler.BukkitRunnable;
@@ -30,6 +23,29 @@ import org.bukkit.util.Vector;
 import org.jetbrains.annotations.NotNull;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
+
+import com.destroystokyo.paper.event.entity.EntityRemoveFromWorldEvent;
+
+import btm.sword.Sword;
+import btm.sword.system.combat.Affliction;
+import btm.sword.system.entity.SwordEntityArbiter;
+import btm.sword.system.entity.aspect.AspectType;
+import btm.sword.system.entity.types.Combatant;
+import btm.sword.util.Prefab;
+import btm.sword.util.display.DrawUtil;
+import btm.sword.util.entity.EntityUtil;
+import btm.sword.util.entity.HitboxUtil;
+import btm.sword.util.math.Basis;
+import btm.sword.util.math.VectorUtil;
+import btm.sword.util.sound.SoundType;
+import btm.sword.util.sound.SoundUtil;
+import lombok.Getter;
+import lombok.Setter;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.TextComponent;
+import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.text.format.TextColor;
+import net.kyori.adventure.text.format.TextDecoration;
 
 /**
  * Abstract base class representing an entity in the Sword plugin system.
@@ -43,9 +59,9 @@ import org.joml.Vector3f;
 @Getter
 @Setter
 public abstract class SwordEntity {
+    protected final UUID uuid;
+    protected final CombatProfile combatProfile;
     protected LivingEntity self;
-    protected UUID uuid;
-    protected CombatProfile combatProfile;
     protected String displayName;
 
     protected EntityAspects aspects;
@@ -83,6 +99,11 @@ public abstract class SwordEntity {
 
     protected boolean ableToPickup;
 
+    protected Basis currentEyeDirectionBasis;
+    protected Basis currentBodyDirectionBasis;
+    protected long timeOfLastEyeBasisCalculation;
+    protected long timeOfLastBodyBasisCalculation;
+
     /**
      * Constructs a new SwordEntity wrapping the specified {@link LivingEntity} and combat profile.
      * Initializes resources, afflictions, and starts ticking updates.
@@ -117,6 +138,8 @@ public abstract class SwordEntity {
         chestVector = new Vector(0, eyeHeight * 0.45, 0);
 
         ableToPickup = true;
+
+        timeOfLastEyeBasisCalculation = 0L;
 
         startTicking();
     }
@@ -208,7 +231,7 @@ public abstract class SwordEntity {
         if (!(entity() instanceof LivingEntity living) || living instanceof ArmorStand) return;
         if (entity().getType() == EntityType.ITEM_DISPLAY || entity().getType() == EntityType.ITEM) return;
 
-        statusDisplay = (TextDisplay) entity().getWorld().spawnEntity(entity().getEyeLocation().setDirection(Prefab.Direction.NORTH), EntityType.TEXT_DISPLAY);
+        statusDisplay = (TextDisplay) entity().getWorld().spawnEntity(entity().getEyeLocation().setDirection(Prefab.Direction.NORTH()), EntityType.TEXT_DISPLAY);
         statusDisplay.addScoreboardTag("remove_on_shutdown");
         statusDisplay.setNoPhysics(true);
         statusDisplay.setBillboard(Display.Billboard.CENTER);
@@ -221,7 +244,11 @@ public abstract class SwordEntity {
                 )
         );
         statusDisplay.setShadowed(true);
-        statusDisplay.setBrightness(new Display.Brightness(15, 15)); // TODO: Config
+        var displayConfig = btm.sword.config.ConfigManager.getInstance().getDisplay();
+        statusDisplay.setBrightness(new Display.Brightness(
+            displayConfig.getStatusDisplayBlockBrightness(),
+            displayConfig.getStatusDisplaySkyBrightness()
+        ));
         statusDisplay.setPersistent(false);
 
         updateStatusDisplayText();
@@ -293,6 +320,7 @@ public abstract class SwordEntity {
      */
     public void onSpawn() {
         ticks = 0;
+        setShouldTick(true);
         resetResources();
     }
 
@@ -301,6 +329,7 @@ public abstract class SwordEntity {
      */
     public void onDeath() {
         endStatusDisplay();
+        setShouldTick(false);
         aspects.stopAllResourceTasks();
     }
 
@@ -311,6 +340,10 @@ public abstract class SwordEntity {
      */
     public LivingEntity entity() {
         return self;
+    }
+
+    public boolean isValid() {
+        return entity().isValid();
     }
 
     /**
@@ -415,10 +448,6 @@ public abstract class SwordEntity {
         for (Affliction affliction : afflictions) {
             affliction.start(this);
         }
-
-        source.message("Hit that guy. He now has:\n" + aspects.shards().cur() + " shards,\n"
-                + aspects.toughness().cur() + " toughness,\n"
-                + aspects.soulfire().cur() + " soulfire.");
     }
 
     /**
@@ -599,6 +628,12 @@ public abstract class SwordEntity {
         setItemStackInHand(new ItemStack(itemType), main);
     }
 
+    public void setItemInInventory(int index, ItemStack item) {
+        if (entity() instanceof Player p) {
+            p.getInventory().setItem(index, item);
+        } else setItemStackInHand(item, index == 0);
+    }
+
     /**
      * Checks if the entity does not have an item in its main hand.
      *
@@ -644,5 +679,86 @@ public abstract class SwordEntity {
      */
     public void setVelocity(Vector v) {
         self.setVelocity(v);
+    }
+
+    public SwordEntity getTargetedEntity(double range) {
+        LivingEntity target = (LivingEntity) HitboxUtil.ray(
+                entity().getEyeLocation(), entity().getEyeLocation().getDirection(), range, 1,
+                entity -> entity instanceof LivingEntity e &&
+                        !(e.getUniqueId() == getUniqueId()) &&
+                        e.isValid());
+
+        return target == null ? null :SwordEntityArbiter.getOrAdd(target.getUniqueId());
+    }
+
+    public Vector rightBasisVector(boolean withPitch) {
+        if (withPitch) {
+            calcEyeDirBasis();
+            return currentEyeDirectionBasis.right();
+        }
+        calcBodyDirBasis();
+        return currentBodyDirectionBasis.right();
+    }
+
+    public Vector upBasisVector(boolean withPitch) {
+        if (withPitch) {
+            calcEyeDirBasis();
+            return currentEyeDirectionBasis.up();
+        }
+        calcBodyDirBasis();
+        return currentBodyDirectionBasis.up();
+    }
+
+    public Vector forwardBasisVector(boolean withPitch) {
+        if (withPitch) {
+            calcEyeDirBasis();
+            return currentEyeDirectionBasis.forward();
+        }
+        calcBodyDirBasis();
+        return currentBodyDirectionBasis.forward();
+    }
+
+    private void calcEyeDirBasis() {
+        if (currentEyeDirectionBasis == null || System.currentTimeMillis() - timeOfLastEyeBasisCalculation > 5) {
+            updateEyeDirectionBasis();
+        }
+    }
+
+    private void calcBodyDirBasis() {
+        if (currentBodyDirectionBasis == null || System.currentTimeMillis() - timeOfLastBodyBasisCalculation > 5) {
+            updateBodyDirectionBasis();
+        }
+    }
+
+    private void updateEyeDirectionBasis() {
+        currentEyeDirectionBasis = VectorUtil.getBasis(entity().getEyeLocation(), entity().getEyeLocation().getDirection());
+        timeOfLastEyeBasisCalculation = System.currentTimeMillis();
+    }
+
+    private void updateBodyDirectionBasis() {
+        currentBodyDirectionBasis = VectorUtil.getBasisWithoutPitch(entity());
+        timeOfLastBodyBasisCalculation = System.currentTimeMillis();
+    }
+
+    public void drawBasis() {
+        Basis testBasis = VectorUtil.getBasisWithoutPitch(entity());
+        DrawUtil.line(List.of(Prefab.Particles.TEST_SWORD_BLUE),
+                entity().getEyeLocation(), testBasis.right(), 4, 0.25);
+        DrawUtil.line(List.of(Prefab.Particles.TEST_SWORD_BLUE),
+                entity().getEyeLocation(), testBasis.up(), 4, 0.25);
+        DrawUtil.line(List.of(Prefab.Particles.TEST_SWORD_BLUE),
+                entity().getEyeLocation(), testBasis.forward(), 4, 0.25);
+    }
+
+    public Vector getChestVector() {
+        return chestVector.clone();
+    }
+
+    public Location getLocation() {
+        return entity().getLocation();
+    }
+
+    public Vector getEyeDirection() {
+        return entity().getLocation().getDirection();
     }
 }

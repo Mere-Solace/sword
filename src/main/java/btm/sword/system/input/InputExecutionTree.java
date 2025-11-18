@@ -1,22 +1,26 @@
 package btm.sword.system.input;
 
-import btm.sword.Sword;
-import btm.sword.system.action.AttackAction;
-import btm.sword.system.action.MovementAction;
-import btm.sword.system.action.type.AttackType;
-import btm.sword.system.action.utility.GrabAction;
-import btm.sword.system.action.utility.UtilityAction;
-import btm.sword.system.action.utility.thrown.ThrowAction;
-import btm.sword.system.entity.aspect.AspectType;
-import btm.sword.system.entity.types.Combatant;
-import btm.sword.system.entity.types.SwordPlayer;
 import java.util.HashMap;
 import java.util.List;
-import lombok.Getter;
-import lombok.Setter;
+
 import org.bukkit.plugin.Plugin;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scheduler.BukkitTask;
+
+import btm.sword.Sword;
+import btm.sword.system.action.AttackAction;
+import btm.sword.system.action.MovementAction;
+import btm.sword.system.action.UmbralBladeAction;
+import btm.sword.system.action.utility.GrabAction;
+import btm.sword.system.action.utility.UtilityAction;
+import btm.sword.system.action.utility.thrown.ThrowAction;
+import btm.sword.system.attack.AttackType;
+import btm.sword.system.entity.aspect.AspectType;
+import btm.sword.system.entity.types.Combatant;
+import btm.sword.system.entity.types.SwordPlayer;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.SneakyThrows;
 
 /**
  * Represents a finite state tree that tracks sequences of player {@link InputType} inputs,
@@ -279,6 +283,7 @@ public class InputExecutionTree {
      * Initializes the input tree with predefined combos and mapped {@link InputAction}s.
      * Sets up example combos for movement, grabbing, attacks, throwing, and utility actions.
      */
+    @SneakyThrows
     public void initializeInputTree() {
         // Item independent actions:
         // dodge forward, dodge backward
@@ -316,14 +321,19 @@ public class InputExecutionTree {
                 true,
                 true);
 
-
         // Item dependent actions:
+
+        // TODO: define possible better way of differentiating between normal attacks and umbral attacks
+        // my main concern with this was not being able to dynamically change cooldowns if umbral blade or normal blade was used
+        // those were erroneous since my cooldown calc is a Function! I love Functional Interfaces!
+        // TODO: make inputExecution tree timeout value dynamic for usage in longer cooldown input chains
 
         // basic attacks
         add(List.of(InputType.LEFT),
                 new InputAction(
-                        executor -> AttackAction.basicAttack(executor, AttackType.BASIC_1, true),
-                        executor -> Math.max(0, (executor.getTimeOfLastAttack() + executor.getDurationOfLastAttack()) - System.currentTimeMillis()),
+                        executor -> AttackAction.basicAttack(executor, AttackType.SLASH1, true),
+                        executor ->
+                            Math.max(0, (executor.getTimeOfLastAttack() + executor.getDurationOfLastAttack()) - System.currentTimeMillis()),
                         Combatant::canPerformAction,
                         true,
                         true),
@@ -333,10 +343,10 @@ public class InputExecutionTree {
 
         add(List.of(InputType.LEFT, InputType.LEFT),
                 new InputAction(
-                        executor -> AttackAction.basicAttack(executor, AttackType.BASIC_2, true),
+                        executor -> AttackAction.basicAttack(executor, AttackType.SLASH2, true),
                         executor -> 0L,
                         Combatant::canPerformAction,
-                        false,
+                        true,
                         true),
                 true,
                 true,
@@ -344,10 +354,10 @@ public class InputExecutionTree {
 
         add(List.of(InputType.LEFT, InputType.LEFT, InputType.LEFT),
                 new InputAction(
-                        executor -> AttackAction.basicAttack(executor, AttackType.BASIC_3, true),
+                        executor -> AttackAction.basicAttack(executor, AttackType.SLASH3, true),
                         executor -> 0L,
                         Combatant::canPerformAction,
-                        false,
+                        true,
                         true),
                 true,
                 true,
@@ -388,6 +398,46 @@ public class InputExecutionTree {
                 true,
                 true,
                 true);
+
+        // umbral blade
+        // toggling of umbral blade can only occur if holding an item (since it begins with drop)
+        // but can be done regardless of which item is being held.
+        //
+        // Most umbral blade actions will require the player to be holding the soul link item, though.
+        add(List.of(InputType.DROP, InputType.SWAP),
+                new InputAction(
+                        UmbralBladeAction::toggle,
+                        executor -> 400L,
+                        Combatant::canPerformAction,
+                        true,
+                        true),
+                true,
+                true,
+                true);
+
+        // wield it
+        add(List.of(InputType.SWAP, InputType.LEFT),
+            new InputAction(
+                    UmbralBladeAction::wield,
+                    executor -> 400L,
+                    Combatant::canPerformAction,
+                    true,
+                    true),
+            true,
+            true,
+            true);
+
+        // lunge (umbral throw action)
+        add(List.of(InputType.SHIFT, InputType.SWAP),
+            new InputAction(
+                UmbralBladeAction::lunge,
+                executor -> 1000L,
+                Combatant::canPerformAction,
+                true,
+                true),
+            true,
+            true,
+            true);
     }
 
     /**

@@ -1,18 +1,20 @@
 package btm.sword.system.action.utility.thrown;
 
+import java.util.function.Consumer;
+
+import org.bukkit.Color;
+import org.bukkit.entity.ItemDisplay;
+import org.bukkit.scheduler.BukkitRunnable;
+
 import btm.sword.Sword;
 import btm.sword.system.action.SwordAction;
 import btm.sword.system.entity.types.Combatant;
 import btm.sword.system.entity.types.SwordPlayer;
-import org.bukkit.Color;
-import org.bukkit.entity.*;
-import org.bukkit.inventory.*;
-import org.bukkit.scheduler.BukkitRunnable;
 
 /**
  * Handles the sequence of actions involved in a {@code Combatant} performing a throw action.
  * <p>
- * A throw in this context is a multi-phase process composed of:
+ * A throw in this context is a multiphase process composed of:
  * <ul>
  *     <li><b>Preparation</b> – The entity begins aiming or charging a throw.</li>
  *     <li><b>Cancellation</b> – The throw is interrupted before release.</li>
@@ -44,29 +46,53 @@ public class ThrowAction extends SwordAction {
      * @param executor The combatant beginning a throw action.
      */
     public static void throwReady(Combatant executor) {
+        // Guard against throwing the Umbral Items
+        // TODO: Add logic here for lunging/directing/hurling the umbral blade
+        if (executor instanceof SwordPlayer swordPlayer && swordPlayer.isUmbralItem(swordPlayer.getMainItemStackAtTimeOfHold())) {
+            swordPlayer.resetTree();
+            swordPlayer.displayMistake();
+            return;
+        }
+
         executor.setAttemptingThrow(true);
         executor.setThrowCancelled(false);
         executor.setThrowSuccessful(false);
 
-        LivingEntity ex = executor.entity();
-        ItemDisplay display = (ItemDisplay) ex.getWorld().spawnEntity(ex.getEyeLocation(), EntityType.ITEM_DISPLAY);
-        display.setGlowing(true);
-        display.setGlowColorOverride(Color.fromRGB(255, 0, 15));
-
+        Consumer<ItemDisplay> setupInstructions;
         ThrownItem thrownItem;
         if (executor instanceof SwordPlayer sp && !sp.getItemStackInHand(true).isEmpty()) {
-            display.setItemStack(sp.getMainItemStackAtTimeOfHold());
+            setupInstructions = display -> {
+                display.setItemStack(sp.getMainItemStackAtTimeOfHold());
+                display.setGlowing(true);
+                display.setGlowColorOverride(Color.fromRGB(255, 0, 15));
+            };
         }
         else {
-            ItemStack main = executor.getItemStackInHand(true);
-            ItemStack off = executor.getItemStackInHand(false);
-
-            display.setItemStack(main);
+            setupInstructions = display -> {
+                display.setItemStack(executor.getItemStackInHand(true));
+                display.setGlowing(true);
+                display.setGlowColorOverride(Color.fromRGB(255, 0, 15));
+            };
         }
-        thrownItem = new ThrownItem(executor, display);
+
+        thrownItem = new ThrownItem(executor, setupInstructions, 0);
         executor.setThrownItem(thrownItem);
 
-        thrownItem.onReady();
+        new BukkitRunnable() {
+            int misses = 0;
+            @Override
+            public void run() {
+                if (misses > 20) {
+                    cancel();
+                }
+                if (thrownItem.getDisplay() == null) {
+                    misses++;
+                } else {
+                    thrownItem.onReady();
+                    cancel();
+                }
+            }
+        }.runTaskTimer(Sword.getInstance(), 0L, 3L);
     }
 
     /**

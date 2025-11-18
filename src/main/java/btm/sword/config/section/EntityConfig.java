@@ -1,9 +1,12 @@
 package btm.sword.config.section;
 
-import lombok.Getter;
+import org.bukkit.NamespacedKey;
+import org.bukkit.Registry;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.potion.PotionEffectType;
+
+import lombok.Getter;
 
 /**
  * Type-safe accessor for entity behavior configuration values.
@@ -34,7 +37,7 @@ public class EntityConfig {
             ConfigurationSection throwPrep = entities.getConfigurationSection("throw_preparation");
             if (throwPrep != null) {
                 String effectName = throwPrep.getString("effect", "SLOWNESS");
-                this.throwPreparationEffect = PotionEffectType.getByName(effectName);
+                this.throwPreparationEffect = Registry.EFFECT.get(NamespacedKey.minecraft(effectName.toLowerCase()));
                 this.throwPreparationDuration = throwPrep.getInt("duration", 1);
                 this.throwPreparationAmplifier = throwPrep.getInt("amplifier", 2);
             } else {

@@ -1,16 +1,19 @@
 package btm.sword.system.action.utility.thrown;
 
-import btm.sword.system.entity.base.SwordEntity;
-import btm.sword.system.entity.types.Combatant;
-import btm.sword.util.display.ParticleWrapper;
-import btm.sword.util.display.Prefab;
 import java.util.HashMap;
+
 import org.bukkit.Location;
 import org.bukkit.Particle;
 import org.bukkit.block.Block;
 import org.bukkit.entity.ItemDisplay;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.util.Vector;
+
+import btm.sword.system.entity.base.SwordEntity;
+import btm.sword.system.entity.types.Combatant;
+import btm.sword.system.entity.umbral.UmbralBlade;
+import btm.sword.util.Prefab;
+import btm.sword.util.display.ParticleWrapper;
 
 /**
  * Manages {@link ThrownItem} instances that are currently active and displayed in the world.
@@ -56,10 +59,10 @@ public class InteractiveItemArbiter {
      * @param display The display entity to remove.
      * @return The removed {@link ThrownItem}, or {@code null} if none was registered.
      */
-    public static ThrownItem remove(ItemDisplay display) {
+    public static ThrownItem remove(ItemDisplay display, boolean dispose) {
         ThrownItem thrownItem = thrownItems.remove(display);
         if (thrownItem != null) {
-            thrownItem.dispose();
+            if (dispose) thrownItem.dispose();
             return thrownItem;
         }
         else return null;
@@ -75,12 +78,23 @@ public class InteractiveItemArbiter {
      * @param executor The combatant performing the grab.
      */
     public static void onGrab(ItemDisplay display, Combatant executor) {
-        ThrownItem thrownItem = remove(display); // Stop displaying the ItemDisplay
+        ThrownItem thrownItem = remove(display, false); // Stop displaying the ItemDisplay
         if (thrownItem == null) return;
 
         ItemStack item = display.getItemStack();
 
         if (!item.isEmpty()) {
+            if (thrownItem instanceof UmbralBlade umbralBlade) {
+                // TODO: remove ->
+                executor.message("Harro, dis is umbral blade!");
+
+                umbralBlade.onGrab(executor);
+                return;
+            }
+            else {
+                thrownItem.dispose();
+            }
+
             executor.giveItem(item);
             Location i = display.getLocation();
             if (item.getType().isBlock()) {

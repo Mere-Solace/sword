@@ -1,21 +1,27 @@
 package btm.sword.system.entity.types;
 
-import btm.sword.system.action.MovementAction;
-import btm.sword.system.action.utility.thrown.ThrownItem;
-import btm.sword.system.entity.aspect.AspectType;
-import btm.sword.system.entity.base.CombatProfile;
-import btm.sword.system.entity.base.SwordEntity;
-import btm.sword.util.display.Prefab;
-import lombok.Getter;
-import lombok.Setter;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.attribute.AttributeInstance;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scheduler.BukkitTask;
 import org.bukkit.util.Vector;
+
+import btm.sword.Sword;
+import btm.sword.system.action.MovementAction;
+import btm.sword.system.action.utility.thrown.ThrownItem;
+import btm.sword.system.entity.aspect.AspectType;
+import btm.sword.system.entity.base.CombatProfile;
+import btm.sword.system.entity.base.SwordEntity;
+import btm.sword.system.entity.umbral.UmbralBlade;
+import btm.sword.system.entity.umbral.input.BladeRequest;
+import btm.sword.system.item.KeyRegistry;
+import btm.sword.util.Prefab;
+import lombok.Getter;
+import lombok.Setter;
 
 /**
  * Abstract class representing combat-capable entities within the Sword plugin.
@@ -34,6 +40,9 @@ public abstract class Combatant extends SwordEntity {
 
     private boolean isGrabbing = false;
     private SwordEntity grabbedEntity;
+
+    private UmbralBlade umbralBlade;
+    private boolean startingBlade;
 
     private ThrownItem thrownItem;
     private ItemStack offHandItemStackDuringThrow;
@@ -56,18 +65,82 @@ public abstract class Combatant extends SwordEntity {
      */
     public Combatant(LivingEntity associatedEntity, CombatProfile combatProfile) {
         super(associatedEntity, combatProfile);
-        airDashesPerformed = 0;
+        this.airDashesPerformed = 0;
 
-        attrHealth = entity().getAttribute(Attribute.MAX_HEALTH);
+        this.attrHealth = entity().getAttribute(Attribute.MAX_HEALTH);
         if (attrHealth != null) attrHealth.setBaseValue(combatProfile.getStat(AspectType.SHARDS).getValue());
 
-        attrAbsorption = entity().getAttribute(Attribute.MAX_ABSORPTION);
+        this.attrAbsorption = entity().getAttribute(Attribute.MAX_ABSORPTION);
         if (attrAbsorption != null) attrAbsorption.setBaseValue(combatProfile.getStat(AspectType.TOUGHNESS).getValue());
 
-        attrArmor = entity().getAttribute(Attribute.ARMOR);
+        this.attrArmor = entity().getAttribute(Attribute.ARMOR);
         if (attrArmor != null) attrArmor.setBaseValue(combatProfile.getStat(AspectType.FORM).getValue());
 
-        attrInteractionRange = entity().getAttribute(Attribute.ENTITY_INTERACTION_RANGE);
+        this.attrInteractionRange = entity().getAttribute(Attribute.ENTITY_INTERACTION_RANGE);
+    }
+
+    @Override
+    public void onSpawn() {
+        super.onSpawn();
+
+    }
+
+    /**
+     * Called when the entity dies.
+     * Cleans up the sheathed sword display entity.
+     */
+    @Override
+    public void onDeath() {
+        super.onDeath();
+        if (umbralBlade.getDisplay().isValid()) {
+            Prefab.Particles.UMBRAL_POOF.display(umbralBlade.getDisplay().getLocation());
+        }
+        if (umbralBlade.getDisplay() == null || !umbralBlade.getDisplay().isValid()) {
+            message("Display is null.");
+        }
+        umbralBlade.dispose();
+        // TODO: on death umbral blade logic... What should happen here?
+    }
+
+    @Override
+    protected void onTick() {
+        super.onTick();
+        handleUmbralBladeTick();
+    }
+
+    public void handleUmbralBladeTick() {
+        if (!entity().isValid()) return;
+
+        if (umbralBlade == null && !isStartingBlade()) {
+            setupUmbralBlade();
+            return;
+        }
+        if (umbralBlade == null) return;
+
+        umbralBlade.onTick();
+    }
+
+    public void setupUmbralBlade() {
+        setStartingBlade(true);
+        Combatant pass = this;
+        new BukkitRunnable() {
+            @Override
+            public void run() {
+                if (umbralBlade != null) return;
+                message("Starting Umbral Blade");
+                umbralBlade = new UmbralBlade(pass, ItemStack.of(Material.STONE_SWORD));
+                setStartingBlade(false);
+            }
+        }.runTaskLater(Sword.getInstance(), 4L);
+    }
+
+    public void endUmbralBlade() {
+        if (umbralBlade == null) return;
+        umbralBlade.dispose();
+    }
+
+    public void requestUmbralBladeState(BladeRequest request) {
+        umbralBlade.request(request);
     }
 
     /**
@@ -124,6 +197,19 @@ public abstract class Combatant extends SwordEntity {
         Prefab.Particles.GRAB_ATTEMPT.display(hitLoc);
         grabbedEntity.hit(this, 0, 0, 5, 15,
                 target.getEyeLocation().subtract(self.getEyeLocation()).toVector());
+    }
+
+    public boolean holdingUmbralItemInMainHand() {
+        return isUmbralItem(getItemStackInHand(true));
+    }
+
+    public boolean isUmbralItem(ItemStack item) {
+//        message("> Check info - ItemStack:" + item.toString() +
+//            "\nSoul link key return: " + item.getItemMeta()
+//            .getPersistentDataContainer().get(KeyRegistry.SOUL_LINK_KEY, PersistentDataType.STRING));
+
+        return !item.isEmpty() &&
+            KeyRegistry.hasKey(item, KeyRegistry.SOUL_LINK_KEY);
     }
 
     /**

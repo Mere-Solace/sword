@@ -1,10 +1,21 @@
 package btm.sword.util.display;
 
-import btm.sword.config.ConfigManager;
-import java.util.List;
+import java.util.Objects;
+import java.util.function.Consumer;
+import java.util.function.Predicate;
+
+import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.entity.Display;
+import org.bukkit.entity.ItemDisplay;
+import org.bukkit.scheduler.BukkitRunnable;
+import org.bukkit.scheduler.BukkitTask;
 import org.bukkit.util.Vector;
+
+import btm.sword.Sword;
+import btm.sword.config.ConfigManager;
+import btm.sword.system.entity.base.SwordEntity;
+import btm.sword.util.Prefab;
 
 /**
  * Utility class for manipulating {@link Display} objects in Bukkit.
@@ -47,49 +58,144 @@ public class DisplayUtil {
         display.setInterpolationDuration(duration);
     }
 
-    /**
-     * Creates a linear sequence of particles (or effects) between two locations using the secant method.
-     * The particles are spaced evenly along the line from origin to end, separated by a specified spacing.
-     *
-     * @param particles a list of {@link ParticleWrapper} objects responsible for display
-     * @param origin the starting {@link Location}
-     * @param end the ending {@link Location}
-     * @param spacing the space between each particle effect along the line
-     */
-    public static void secant(List<ParticleWrapper> particles, Location origin, Location end, double spacing) {
-        Vector direction = end.clone().subtract(origin).toVector();
-        int steps = (int) (direction.length() / (spacing));
-        if (steps == 0) steps = 1;
+    // returns a task for use in detecting when finished
+    public static BukkitTask displaySlerpToOffset(SwordEntity entity, ItemDisplay display, Vector offset,
+                                                  double speed, int tpDuration, int period,
+                                                  double endDistance, boolean removeOnArrival,
+                                                  Runnable callback) {
+        return new BukkitRunnable() {
+            @Override
+            public void run() {
+                if (!entity.isValid() || !display.isValid()) {
+                    if (display.isValid() && removeOnArrival) display.remove();
+                    if (callback != null) {
+                        Bukkit.getScheduler().runTask(Sword.getInstance(), callback);
+                    }
+                    cancel();
+                    return;
+                }
 
-        Vector step = direction.clone().normalize().multiply(spacing);
-        Location cur = origin.clone();
+                Location curTarget = entity.entity().getLocation().add(
+                        entity.rightBasisVector(false).multiply(offset.getX()).add(
+                                entity.upBasisVector(false).multiply(offset.getY()).add(
+                                        entity.forwardBasisVector(false).multiply(offset.getZ())
+                                )
+                        ));
 
-        for (int i = 0; i <= steps; i++) {
-            cur.add(step);
-            for (ParticleWrapper p : particles) {
-                p.display(cur);
+                Vector diff = curTarget.toVector().subtract(display.getLocation().toVector());
+
+                if (diff.isZero() || diff.lengthSquared() < endDistance*endDistance) {
+                    if (display.isValid() && removeOnArrival) display.remove();
+                    if (callback != null) {
+                        Bukkit.getScheduler().runTask(Sword.getInstance(), callback);
+                    }
+                    cancel();
+                    return;
+                }
+
+                Vector scaledDiff = diff.normalize().multiply(speed);
+
+                Location update = display.getLocation().add(scaledDiff);
+
+                smoothTeleport(display, tpDuration);
+
+                display.teleport(update.setDirection(update.toVector().subtract(display.getLocation().toVector())));
             }
-        }
+        }.runTaskTimer(Sword.getInstance(), 0L, period);
     }
 
     /**
-     * Draws a line of particles or effects along a specified direction, starting from a location.
-     * The line extends for a specified length and has a certain width between particle points.
+     * Causes an {@link ItemDisplay} entity to follow a {@link SwordEntity} visually,
+     * maintaining a specified direction offset and height, with optional following of the entity's head yaw.
+     * The display is updated every 2 ticks asynchronously until either entity or display is dead or air.
      *
-     * @param particles a list of {@link ParticleWrapper} objects responsible for display
-     * @param origin the starting {@link Location}
-     * @param dir the direction vector of the line
-     * @param length the length of the line in blocks
-     * @param width the spacing between each particle or effect along the line
+     * @param entity the SwordEntity to follow
+     * @param itemDisplay the {@link ItemDisplay} to move to follow the entity
+     * @param direction the direction {@link Vector} offset relative to the entity
+     * @param heightOffset vertical height offset from the entity's location
+     * @param followHead whether to align the display's direction to the entity's head yaw instead of body yaw
      */
-    public static void line(List<ParticleWrapper> particles, Location origin, Vector dir, double length, double width) {
-        Vector step = dir.clone().normalize().multiply(width);
-        Location cur = origin.clone();
-        for (double i = 0; i <= length; i += width) {
-            cur.add(step);
-            for (ParticleWrapper p : particles) {
-                p.display(cur);
+    public static <T> void itemDisplayFollow(SwordEntity entity, ItemDisplay itemDisplay, Vector direction, double heightOffset, boolean followHead,
+                                             Predicate<T> condition, T toTest, Consumer<T> callback, T toConsume) {
+        double originalYaw = Math.toRadians(entity.entity().getBodyYaw());
+        Vector offset = Prefab.Direction.UP().multiply(heightOffset);
+
+        var displayFollow = ConfigManager.getInstance().getDisplay().getItemDisplayFollow();
+        itemDisplay.setBillboard(displayFollow.getBillboardMode());
+        entity.entity().addPassenger(itemDisplay);
+
+        new BukkitRunnable() {
+            int step = 0;
+            @Override
+            public void run() {
+                if (entity.isDead() || itemDisplay.isDead() || itemDisplay.getItemStack().getType().isAir()) {
+                    cancel();
+                }
+
+                if (condition != null && toTest != null && condition.test(toTest)) {
+                    // TODO: remove
+                    Objects.requireNonNull(Bukkit.getPlayer("BladeSworn")).sendMessage("Condition satisfied, no longer in Lodged state");
+                    if (callback != null && toConsume != null) callback.accept(toConsume);
+                    cancel();
+                }
+
+                Location l = entity.entity().getLocation().add(offset);
+
+                double yawRads = Math.toRadians(followHead ? entity.entity().getYaw() : entity.entity().getBodyYaw());
+                Vector curDir = direction.clone().rotateAroundY(originalYaw-yawRads);
+                l.setDirection(curDir);
+
+                DisplayUtil.smoothTeleport(itemDisplay, displayFollow.getUpdateInterval());
+                itemDisplay.teleport(l);
+
+                if (step % displayFollow.getParticleInterval() == 0)
+                    Prefab.Particles.BLEED.display(l);
+
+                step++;
             }
-        }
+        }.runTaskTimer(Sword.getInstance(), 0L, displayFollow.getUpdateInterval());
+    }
+
+    // x = right, y = up, z = forward
+    public static <T> void itemDisplayFollowLerpTillCondition(SwordEntity entity, ItemDisplay display, Vector offset, int tpDuration, int period, boolean withPitch, Predicate<T> endCondition, T toTest) {
+        new BukkitRunnable() {
+            @Override
+            public void run() {
+                if (endCondition.test(toTest)) {
+                    cancel();
+                    return;
+                }
+
+                DisplayUtil.smoothTeleport(display, tpDuration);
+
+                display.teleport(entity.entity().getLocation().add(
+                        entity.rightBasisVector(withPitch).multiply(offset.getX()).add(
+                                entity.upBasisVector(withPitch).multiply(offset.getY()).add(
+                                        entity.forwardBasisVector(withPitch).multiply(offset.getZ())
+                                )
+                        )
+                ).setDirection(entity.forwardBasisVector(withPitch)));
+            }
+        }.runTaskTimer(Sword.getInstance(), 0L, period);
+    }
+
+    public static BukkitTask itemDisplayFollowLerp(SwordEntity entity, ItemDisplay display, Vector offset, int tpDuration, int period, boolean withPitch) {
+        return new BukkitRunnable() {
+            @Override
+            public void run() {
+                DisplayUtil.smoothTeleport(display, tpDuration);
+
+                Vector current =
+                    entity.rightBasisVector(withPitch).multiply(offset.getX()).add(
+                        entity.upBasisVector(withPitch).multiply(offset.getY()).add(
+                            entity.forwardBasisVector(withPitch).multiply(offset.getZ())
+                        )
+                    );
+                Location updated = entity.entity()
+                    .getLocation()
+                    .add(current);
+                display.teleport(updated.setDirection(entity.forwardBasisVector(withPitch)));
+            }
+        }.runTaskTimer(Sword.getInstance(), 0L, period);
     }
 }

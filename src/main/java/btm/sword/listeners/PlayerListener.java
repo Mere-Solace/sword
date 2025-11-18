@@ -1,16 +1,7 @@
 package btm.sword.listeners;
 
-import btm.sword.Sword;
-import btm.sword.system.entity.*;
-import btm.sword.system.entity.base.SwordEntity;
-import btm.sword.system.entity.types.SwordPlayer;
-import btm.sword.system.item.prefab.ItemLibrary;
-import io.papermc.paper.event.player.AsyncChatEvent;
-import io.papermc.paper.event.player.PlayerShieldDisableEvent;
-import net.kyori.adventure.key.Key;
-import net.kyori.adventure.sound.Sound;
-import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
+import java.util.Objects;
+
 import org.bukkit.GameMode;
 import org.bukkit.Particle;
 import org.bukkit.entity.HumanEntity;
@@ -19,12 +10,26 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityPickupItemEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
-import org.bukkit.event.inventory.*;
+import org.bukkit.event.inventory.InventoryClickEvent;
+import org.bukkit.event.inventory.InventoryEvent;
 import org.bukkit.event.player.PlayerGameModeChangeEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.player.PlayerRespawnEvent;
 import org.intellij.lang.annotations.Subst;
+
+import btm.sword.Sword;
+import btm.sword.system.entity.SwordEntityArbiter;
+import btm.sword.system.entity.base.SwordEntity;
+import btm.sword.system.entity.types.SwordPlayer;
+import btm.sword.system.entity.umbral.input.BladeRequest;
+import btm.sword.system.item.prefab.ItemLibrary;
+import io.papermc.paper.event.player.AsyncChatEvent;
+import io.papermc.paper.event.player.PlayerShieldDisableEvent;
+import net.kyori.adventure.key.Key;
+import net.kyori.adventure.sound.Sound;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 
 
 /**
@@ -82,7 +87,7 @@ public class PlayerListener implements Listener {
      */
     @EventHandler
     public void onPlayerDeath(PlayerDeathEvent event) {
-        SwordEntityArbiter.getOrAdd(event.getPlayer().getUniqueId()).endStatusDisplay();
+        SwordEntityArbiter.getOrAdd(event.getPlayer().getUniqueId()).onDeath();
     }
 
     /**
@@ -306,10 +311,10 @@ public class PlayerListener implements Listener {
         SwordPlayer swordPlayer = (SwordPlayer) SwordEntityArbiter.getOrAdd(event.getPlayer().getUniqueId());
 
         if (event.getNewGameMode().equals(GameMode.SPECTATOR)) {
-            swordPlayer.endSheathedWeapon();
+            swordPlayer.requestUmbralBladeState(BladeRequest.DEACTIVATE);
         }
-        else {
-            swordPlayer.setSheathedActive(true);
+        else if (Objects.equals(event.getPlayer().getGameMode(), GameMode.SPECTATOR)) {
+            swordPlayer.requestUmbralBladeState(BladeRequest.ACTIVATE_AS_SHEATHED);
         }
     }
 }

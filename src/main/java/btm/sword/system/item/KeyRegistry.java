@@ -1,13 +1,15 @@
 package btm.sword.system.item;
 
-import btm.sword.Sword;
 import java.util.Set;
+
 import org.bukkit.NamespacedKey;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.persistence.PersistentDataContainer;
 import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.plugin.Plugin;
+
+import btm.sword.Sword;
 
 /**
  * Centralized registry and utility class for {@link NamespacedKey} management
@@ -44,6 +46,10 @@ public final class KeyRegistry {
     // ------------------------------
     //  Commonly Used Keys
     // ------------------------------
+
+    public static final String SOUL_LINK = "soul_link";
+
+    public static final NamespacedKey SOUL_LINK_KEY = key(SOUL_LINK);
 
     /** Persistent data key for GUI buttons or menu items. */
     public static final String MAIN_MENU_BUTTON = "main_menu_button";

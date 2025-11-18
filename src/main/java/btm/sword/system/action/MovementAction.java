@@ -1,5 +1,24 @@
 package btm.sword.system.action;
 
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
+
+import org.bukkit.FluidCollisionMode;
+import org.bukkit.Location;
+import org.bukkit.Particle;
+import org.bukkit.World;
+import org.bukkit.block.data.BlockData;
+import org.bukkit.entity.Entity;
+import org.bukkit.entity.EntityType;
+import org.bukkit.entity.ItemDisplay;
+import org.bukkit.entity.LivingEntity;
+import org.bukkit.potion.PotionEffect;
+import org.bukkit.potion.PotionEffectType;
+import org.bukkit.scheduler.BukkitRunnable;
+import org.bukkit.util.RayTraceResult;
+import org.bukkit.util.Vector;
+
 import btm.sword.Sword;
 import btm.sword.config.ConfigManager;
 import btm.sword.config.section.MovementConfig;
@@ -8,24 +27,12 @@ import btm.sword.system.entity.SwordEntityArbiter;
 import btm.sword.system.entity.aspect.AspectType;
 import btm.sword.system.entity.base.SwordEntity;
 import btm.sword.system.entity.types.Combatant;
-import btm.sword.util.display.DisplayUtil;
+import btm.sword.util.Prefab;
+import btm.sword.util.display.DrawUtil;
 import btm.sword.util.display.ParticleWrapper;
-import btm.sword.util.display.Prefab;
 import btm.sword.util.entity.HitboxUtil;
 import btm.sword.util.sound.SoundType;
 import btm.sword.util.sound.SoundUtil;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
-import org.bukkit.FluidCollisionMode;
-import org.bukkit.Location;
-import org.bukkit.Particle;
-import org.bukkit.World;
-import org.bukkit.block.data.BlockData;
-import org.bukkit.entity.*;
-import org.bukkit.scheduler.BukkitRunnable;
-import org.bukkit.util.RayTraceResult;
-import org.bukkit.util.Vector;
 
 
 /**
@@ -44,7 +51,7 @@ public class MovementAction extends SwordAction {
      *
      * @param executor The combatant performing the dash.
      * @param forward  True for forward dash, false for backward dash.
-     */
+     */ // TODO: This method is illegible...
     public static void dash(Combatant executor, boolean forward) {
         MovementConfig cfg = ConfigManager.getInstance().getMovement();
         double maxDistance = cfg.getDashMaxDistance();
@@ -53,9 +60,12 @@ public class MovementAction extends SwordAction {
             @Override
             public void run() {
                 LivingEntity ex = executor.entity();
-                Location initial = ex.getLocation().add(new Vector(0, cfg.getDashInitialOffsetY(), 0));
+                final Location dashStartLocation = ex.getLocation().add(new Vector(0, cfg.getDashInitialOffsetY(), 0));
                 boolean onGround = executor.isGrounded();
                 Location o = ex.getEyeLocation();
+
+                PotionEffect speed = new PotionEffect(PotionEffectType.SPEED, 5, 3);
+                ex.addPotionEffect(speed);
 
                 // check for an item that may be the target of the dash
                 Entity targetedItem = HitboxUtil.ray(o, o.getDirection(), maxDistance, cfg.getDashRayHitboxRadius(),
@@ -80,7 +90,7 @@ public class MovementAction extends SwordAction {
                         int t = 0;
                         @Override
                         public void run() {
-                            DisplayUtil.secant(List.of(Prefab.Particles.TEST_SWORD_BLUE), initial, ex.getLocation(), cfg.getDashSecantRadius());
+                            DrawUtil.secant(List.of(Prefab.Particles.TEST_SWORD_BLUE), dashStartLocation, ex.getLocation(), cfg.getDashSecantRadius());
                             t += cfg.getDashParticleTimerIncrement();
                             if (t > cfg.getDashParticleTimerThreshold()) cancel();
                         }
@@ -96,7 +106,7 @@ public class MovementAction extends SwordAction {
                         executor.setVelocity(ex.getEyeLocation().getDirection().multiply(Math.log(length)));
 
                         Vector u = executor.getFlatDir().multiply(forward ? cfg.getDashForwardMultiplier() : -cfg.getDashForwardMultiplier())
-                                .add(Prefab.Direction.UP.clone().multiply(cfg.getDashUpwardMultiplier()));
+                                .add(Prefab.Direction.UP().multiply(cfg.getDashUpwardMultiplier()));
 
                         new BukkitRunnable() {
                             @Override
@@ -112,7 +122,8 @@ public class MovementAction extends SwordAction {
                                     SoundUtil.playSound(ex, SoundType.ENTITY_ENDER_DRAGON_FLAP, cfg.getDashFlapSoundVolume(), cfg.getDashFlapSoundPitch());
                                     SoundUtil.playSound(ex, SoundType.ENTITY_PLAYER_ATTACK_SWEEP, cfg.getDashSweepSoundVolume(), cfg.getDashSweepSoundPitch());
                                     executor.setVelocity(u);
-                                    InteractiveItemArbiter.onGrab(id, executor);
+
+                                    InteractiveItemArbiter.onGrab(id, executor); // here is where the display is taken care of
                                 }
                                 else {
                                     Vector v = ex.getVelocity();
@@ -131,7 +142,7 @@ public class MovementAction extends SwordAction {
 
                 double dashPower = cfg.getDashBasePower();
                 double s = forward ? dashPower : -dashPower;
-                Vector up = Prefab.Direction.UP.clone().multiply(cfg.getDashUpwardBoost());
+                Vector up = Prefab.Direction.UP().multiply(cfg.getDashUpwardBoost());
                 new BukkitRunnable() {
                     int i = 0;
                     @Override

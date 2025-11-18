@@ -1,13 +1,16 @@
 package btm.sword.commands;
 
-import btm.sword.config.ConfigManager;
+import java.util.List;
+
+import org.bukkit.command.CommandSender;
+
 import com.mojang.brigadier.Command;
+
+import btm.sword.config.ConfigManager;
 import io.papermc.paper.command.brigadier.CommandSourceStack;
 import io.papermc.paper.command.brigadier.Commands;
-import java.util.List;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
-import org.bukkit.command.CommandSender;
 
 /**
  * Brigadier-based command registration for Sword: Combat Evolved.
@@ -17,7 +20,10 @@ import org.bukkit.command.CommandSender;
  * - /sword reload - Hot reloads configuration from disk
  * </p>
  */
-public class SwordCommands {
+public final class SwordCommands {
+    private SwordCommands() {
+        throw new UnsupportedOperationException("Utility class");
+    }
 
     /**
      * Registers all plugin commands using Paper's Brigadier command system.
@@ -71,14 +77,27 @@ public class SwordCommands {
             boolean success = ConfigManager.getInstance().reload();
 
             if (success) {
-                sender.sendMessage(Component.text("✓ Configuration reloaded successfully!", NamedTextColor.GREEN));
-                sender.sendMessage(Component.text("  All values have been updated from config.yaml", NamedTextColor.GRAY));
+                sender.sendMessage(
+                    Component.text("✓ Configuration reloaded successfully!", NamedTextColor.GREEN)
+                );
+                sender.sendMessage(
+                    Component.text("  All values have been updated from config.yaml", NamedTextColor.GRAY)
+                );
             } else {
-                sender.sendMessage(Component.text("✗ Configuration reload failed!", NamedTextColor.RED));
-                sender.sendMessage(Component.text("  Check console for error details. Using previous values.", NamedTextColor.GRAY));
+                sender.sendMessage(
+                    Component.text("✗ Configuration reload failed!", NamedTextColor.RED)
+                );
+                sender.sendMessage(
+                    Component.text(
+                        "  Check console for error details. Using previous values.",
+                        NamedTextColor.GRAY
+                    )
+                );
             }
         } catch (Exception e) {
-            sender.sendMessage(Component.text("✗ Fatal error during reload: " + e.getMessage(), NamedTextColor.DARK_RED));
+            sender.sendMessage(
+                Component.text("✗ Fatal error during reload: " + e.getMessage(), NamedTextColor.DARK_RED)
+            );
             sender.sendMessage(Component.text("  Check console for full stack trace.", NamedTextColor.GRAY));
         }
 

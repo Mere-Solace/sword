@@ -1,25 +1,20 @@
 package btm.sword.system.action.utility.thrown;
 
-import btm.sword.Sword;
-import btm.sword.config.ConfigManager;
-import btm.sword.system.entity.SwordEntityArbiter;
-import btm.sword.system.entity.base.SwordEntity;
-import btm.sword.system.entity.types.Combatant;
-import btm.sword.system.entity.types.SwordPlayer;
-import btm.sword.util.display.DisplayUtil;
-import btm.sword.util.display.ParticleWrapper;
-import btm.sword.util.display.Prefab;
-import btm.sword.util.entity.EntityUtil;
-import btm.sword.util.math.VectorUtil;
-import java.util.List;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
-import lombok.Getter;
-import lombok.Setter;
-import net.kyori.adventure.text.format.TextColor;
-import org.bukkit.*;
+
+import org.bukkit.FluidCollisionMode;
+import org.bukkit.Location;
+import org.bukkit.Material;
+import org.bukkit.Particle;
 import org.bukkit.block.Block;
-import org.bukkit.entity.*;
+import org.bukkit.entity.ArmorStand;
+import org.bukkit.entity.Entity;
+import org.bukkit.entity.EntityType;
+import org.bukkit.entity.Item;
+import org.bukkit.entity.ItemDisplay;
+import org.bukkit.entity.LivingEntity;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
@@ -32,6 +27,22 @@ import org.jetbrains.annotations.NotNull;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
 
+import btm.sword.Sword;
+import btm.sword.config.ConfigManager;
+import btm.sword.system.entity.SwordEntityArbiter;
+import btm.sword.system.entity.base.SwordEntity;
+import btm.sword.system.entity.types.Combatant;
+import btm.sword.system.entity.types.SwordPlayer;
+import btm.sword.util.Prefab;
+import btm.sword.util.display.DisplayUtil;
+import btm.sword.util.display.ParticleWrapper;
+import btm.sword.util.entity.EntityUtil;
+import btm.sword.util.math.Basis;
+import btm.sword.util.math.VectorUtil;
+import lombok.Getter;
+import lombok.Setter;
+import net.kyori.adventure.text.format.TextColor;
+
 /**
  * Represents a thrown item entity that is actively simulated in the world.
  * <p>
@@ -42,48 +53,84 @@ import org.joml.Vector3f;
 @Getter
 @Setter
 public class ThrownItem {
-    private final ItemDisplay display;
-    private final Combatant thrower;
-    private final ParticleWrapper blockTrail;
+    protected final Combatant thrower;
+    private ParticleWrapper blockTrail;
+    protected ItemDisplay display;
+    protected Consumer<ItemDisplay> displaySetupInstructions;
 
-    private float xDisplayOffset;
-    private float yDisplayOffset;
-    private float zDisplayOffset;
+    protected float xDisplayOffset;
+    protected float yDisplayOffset;
+    protected float zDisplayOffset;
 
-    private Location origin;
-    private Location cur;
-    private Location prev;
-    private Vector velocity;
-    private double initialVelocity;
+    protected Location origin;
+    protected Location cur;
+    protected Location prev;
+    protected Vector to; // cur - prev
+    protected Vector velocity;
+
+    protected double timeScalingFactor = -1;
+    protected double timeCutoff = -1;
+
+    protected Basis currentBasis;
+
+    protected double initialVelocity;
 
     int t = 0;
-    private Function<Integer, Vector> positionFunction;
-    private Function<Integer, Vector> velocityFunction;
 
-    private boolean grounded;
-    private Block stuckBlock;
+    protected Function<Double, Vector> positionFunction;
+    protected Function<Double, Vector> velocityFunction;
 
-    private boolean hit;
-    private SwordEntity hitEntity;
+    protected boolean grounded;
+    protected Block stuckBlock;
 
-    private boolean caught;
+    protected boolean hit;
+    protected SwordEntity hitEntity;
 
-    private boolean inFlight;
+    protected boolean caught;
 
-    private BukkitTask disposeTask;
+    protected boolean inFlight;
 
-    /**
-     * Constructs a new thrown item instance with the given thrower and display.
-     *
-     * @param thrower The entity performing the throw.
-     * @param display The {@link ItemDisplay} representing the thrown object.
-     */
-    public ThrownItem(Combatant thrower, ItemDisplay display) {
+    protected BukkitTask disposeTask;
+
+    protected boolean setupSuccessful;
+
+    public ThrownItem(Combatant thrower, Consumer<ItemDisplay> displaySetupInstructions, int setupPeriod) {
         this.thrower = thrower;
-        this.display = display;
+        this.displaySetupInstructions = displaySetupInstructions;
+        setupSuccessful = false;
 
+        xDisplayOffset = -0.6f;
+        yDisplayOffset = 0.25f;
+        zDisplayOffset = -0.1f;
+
+        setup(setupPeriod);
+    }
+
+    protected void setup(int period) {
+        new BukkitRunnable() {
+            @Override
+            public void run() {
+                if (setupSuccessful) {
+                    afterSpawn();
+                    cancel();
+                    return;
+                }
+                try {
+                    LivingEntity e = thrower.getSelf();
+                    display = (ItemDisplay) e.getWorld().spawnEntity(e.getEyeLocation(), EntityType.ITEM_DISPLAY);
+                    displaySetupInstructions.accept(display);
+                    setupSuccessful = true;
+                } catch (Exception e) {
+                    e.addSuppressed(e);
+                }
+            }
+        }.runTaskTimer(Sword.getInstance(), 0L, period);
+    }
+
+    protected void afterSpawn() {
         blockTrail = display.getItemStack().getType().isBlock() ?
-                new ParticleWrapper(Particle.BLOCK, 5, 0.25,  0.25,  0.25, display.getItemStack().getType().createBlockData()) :
+                new ParticleWrapper(Particle.BLOCK, 5, 0.25,  0.25,  0.25,
+                        display.getItemStack().getType().createBlockData()) :
                 null;
 
         if (thrower instanceof SwordPlayer sp) {
@@ -125,11 +172,10 @@ public class ThrownItem {
 
         determineOrientation();
 
-        LivingEntity ex = thrower.entity();
+        final LivingEntity throwerEntity = thrower.entity();
 
         new BukkitRunnable() {
             int i = 0;
-            int step = 0;
             @Override
             public void run() {
                 if (thrower.isThrowCancelled()) {
@@ -141,8 +187,6 @@ public class ThrownItem {
                 }
                 else if (thrower.isThrowSuccessful()) {
                     thrower.setItemTypeInHand(Material.AIR, true);
-//					ItemStack toReturn = thrower.getOffHandItemStackDuringThrow();
-//					thrower.setItemStackInHand(toReturn, false);
                     cancel();
                     return;
                 }
@@ -159,12 +203,10 @@ public class ThrownItem {
                     }
                 }
 
-                ex.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 1, 2));
+                throwerEntity.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 1, 2));
 
                 DisplayUtil.smoothTeleport(display, 2);
-                display.teleport(ex.getEyeLocation());
-
-                step++;
+                display.teleport(throwerEntity.getEyeLocation());
             }
         }.runTaskTimer(Sword.getInstance(), 0L, 1L);
     }
@@ -187,65 +229,37 @@ public class ThrownItem {
             }.runTaskLater(Sword.getInstance(), 2);
         }
 
-        Prefab.Sounds.THROW.play(thrower.entity());
-
-        thrower.setItemStackInHand(ItemStack.of(Material.AIR), true);
-        InteractiveItemArbiter.put(this);
+        generateFunctions(initialVelocity);
+        handleOnReleaseActions();
 
         xDisplayOffset = yDisplayOffset = zDisplayOffset = 0;
         determineOrientation();
 
-        this.initialVelocity = initialVelocity;
-        LivingEntity ex = thrower.entity();
-        Location o = ex.getEyeLocation();
-        List<Vector> basis = VectorUtil.getBasisWithoutPitch(o);
-        double phi = Math.toRadians(-1 * o.getPitch());
-        double cosPhi = Math.cos(phi);
-        double sinPhi = Math.sin(phi);
-        double forwardCoefficient = initialVelocity*cosPhi;
-        double upwardCoefficient = initialVelocity*sinPhi;
-        origin = o.add(basis.getFirst().multiply(ConfigManager.getInstance().getPhysics().getThrownItems().getOriginOffsetForward()))
-                .add(basis.get(1).multiply(ConfigManager.getInstance().getPhysics().getThrownItems().getOriginOffsetUp()))
-                .add(basis.getLast().multiply(ConfigManager.getInstance().getPhysics().getThrownItems().getOriginOffsetBack()));
-        cur = origin.clone();
-        prev = cur.clone();
-        Vector flatDir = thrower.getFlatDir().rotateAroundY(ConfigManager.getInstance().getPhysics().getThrownItems().getTrajectoryRotation());
-        velocity = flatDir.clone();
-        Vector forwardVelocity = flatDir.clone().multiply(forwardCoefficient);
-        Vector upwardVelocity = Prefab.Direction.UP.clone().multiply(upwardCoefficient);
-
-        double gravDamper = ConfigManager.getInstance().getPhysics().getThrownItems().getGravityDamper();
-
-        positionFunction = t -> flatDir.clone().multiply(forwardCoefficient*t)
-                .add(Prefab.Direction.UP.clone().multiply((upwardCoefficient*t)-(initialVelocity*(1/gravDamper)*t*t)));
-
-        velocityFunction = t -> forwardVelocity.clone()
-                .add(upwardVelocity.clone().add(Prefab.Direction.UP.clone().multiply(-initialVelocity*(2/(gravDamper))*t)));
-
         new BukkitRunnable() {
             @Override
-            public void run() {
-                if (grounded || hit || caught || display.isDead()) {
+            public void run() {                                             // TODO: is this correct?
+                if (grounded || hit || caught || display.isDead() || (timeCutoff > 0 && t * timeScalingFactor > timeCutoff)) {
+                    String reason = grounded ? "grounded" :
+                        hit ? "hit" :
+                            caught ? "caught" :
+                                display.isDead() ? "display dead" :
+                                    (timeCutoff > 0 && t > timeCutoff) ? "time cutoff" :
+                                        "unknown";
+                    thrower.message("Ending due to: " + reason);
+
                     onEnd();
                     cancel();
                     return;
                 }
 
-                cur = origin.clone().add(positionFunction.apply(t));
-                velocity = velocityFunction.apply(t);
+                applyFunctions();
 
+                // TODO: still need to fix that nose not coming back down on fall for swords...
                 if (!prev.equals(cur) && cur.clone().subtract(prev).toVector().dot(velocity) > 0) {
                     DisplayUtil.smoothTeleport(display, 1);
                 }
 
-                String name = display.getItemStack().getType().toString();
-                if (name.endsWith("_SWORD")) {
-                    display.teleport(cur.setDirection(velocity));
-                }
-                else {
-                    display.teleport(cur.setDirection(basis.getLast()));
-                }
-
+                teleport();
                 rotate();
 
                 Prefab.Particles.THROW_TRAIl.display(cur);
@@ -257,6 +271,82 @@ public class ThrownItem {
                 t++; // Step time value forward for next iteration
             }
         }.runTaskTimer(Sword.getInstance(), 0L, 1L);
+    }
+
+    protected void teleport() {
+        String name = display.getItemStack().getType().toString();
+        if (name.endsWith("_SWORD")) {
+            display.teleport(cur.setDirection(velocity));
+        }
+        else {
+            display.teleport(cur.setDirection(currentBasis.forward()));
+        }
+    }
+
+    protected void applyFunctions() {
+        double time;
+        if (timeScalingFactor < 0) {
+            time = t;
+        }
+        else {
+            time = t * timeScalingFactor;
+        }
+        cur = origin.clone().add(positionFunction.apply(time));
+        velocity = velocityFunction.apply(time);
+    }
+
+    /**
+     * Play sounds and remove the item in the main hand of the player. Should be overridden for different logic.
+     */
+    protected void handleOnReleaseActions() {
+        Prefab.Sounds.THROW.play(thrower.entity());
+        thrower.setItemStackInHand(ItemStack.of(Material.AIR), true);
+        InteractiveItemArbiter.put(this);
+    }
+
+    protected void generateFunctions(double initialVelocity) {
+        calculatePhysicsFunctions(initialVelocity);
+    }
+    // TODO: ^^ correctly calc origin and direction for the non-physical trajectory
+    // TODO: make dynamic so targeted entity location is targeted.
+    private void calculatePhysicsFunctions(double initialVelocity) {
+        this.initialVelocity = initialVelocity;
+
+        LivingEntity ex = thrower.entity();
+        Location o = ex.getEyeLocation();
+        this.currentBasis = VectorUtil.getBasisWithoutPitch(ex);
+
+        // clamp the pitch between these values so that strange undefined vertical vector behavior doesn't occur.
+        double min = Math.toRadians(-89);
+        double max = Math.toRadians(89);
+        double phi = Math.max(min, Math.min(max, Math.toRadians(-1 * o.getPitch())));
+
+        double cosPhi = Math.cos(phi);
+        double sinPhi = Math.sin(phi);
+        double forwardCoefficient = initialVelocity * cosPhi;
+        double upwardCoefficient = initialVelocity * sinPhi;
+
+        origin = o.add(currentBasis.right().multiply(ConfigManager.getInstance()
+                .getPhysics().getThrownItems().getOriginOffsetForward()))
+            .add(currentBasis.up().multiply(ConfigManager.getInstance()
+                .getPhysics().getThrownItems().getOriginOffsetUp()))
+            .add(currentBasis.forward().multiply(ConfigManager.getInstance()
+                .getPhysics().getThrownItems().getOriginOffsetBack()));
+        cur = origin.clone();
+        prev = cur.clone();
+        Vector flatDir = thrower.getFlatDir().rotateAroundY(ConfigManager.getInstance()
+            .getPhysics().getThrownItems().getTrajectoryRotation());
+        velocity = flatDir.clone();
+        Vector forwardVelocity = flatDir.clone().multiply(forwardCoefficient);
+        Vector upwardVelocity = Prefab.Direction.UP().multiply(upwardCoefficient);
+
+        double gravDamper = ConfigManager.getInstance().getPhysics().getThrownItems().getGravityDamper();
+
+        positionFunction = t -> flatDir.clone().multiply(forwardCoefficient * t)
+            .add(Prefab.Direction.UP().multiply((upwardCoefficient * t) - (initialVelocity * (1 / gravDamper) * t * t)));
+
+        velocityFunction = t -> forwardVelocity.clone()
+            .add(upwardVelocity.clone().add(Prefab.Direction.UP().multiply(-initialVelocity * (2 / (gravDamper)) * t)));
     }
 
     /**
@@ -272,6 +362,7 @@ public class ThrownItem {
 
         var rotationSpeed = ConfigManager.getInstance().getPhysics().getThrownItems().getRotationSpeed();
 
+        // TODO: make more extensible somehow?
         if (name.endsWith("_SWORD")) {
             newRotation = curRotation.rotateZ((float) rotationSpeed.getSword());
         }
@@ -309,10 +400,11 @@ public class ThrownItem {
      * <p>
      * Delegates to the correct outcome handler depending on state flags.
      */
-    public void onEnd() {
+    protected void onEnd() {
         if (caught) onCatch();
         else if (hit) onHit();
         else if (grounded) onGrounded();
+        t = 0; // TODO: Make better reset method if this is not the only cleanup to perform
     }
 
     /**
@@ -333,7 +425,7 @@ public class ThrownItem {
 
         int x = 1;
         while (!marker.getLocation().getBlock().isPassable()) { // changed from getType().isAir()
-            marker.teleport(cur.clone().add(velocity.normalize().multiply(-0.1*x)));
+            marker.teleport(cur.clone().add(velocity.normalize().multiply(-0.1 * x)));
             x++;
             if (x > 30) break;
         }
@@ -343,7 +435,7 @@ public class ThrownItem {
             public void run() {
                 cur = marker.getLocation();
                 DisplayUtil.smoothTeleport(display, 1);
-                display.teleport(cur.clone().setDirection(velocityFunction.apply(t+1)));
+                display.teleport(cur.clone().setDirection(velocityFunction.apply((double) t + 1)));
                 marker.remove();
             }
         }.runTaskLater(Sword.getInstance(), 1L);
@@ -354,7 +446,6 @@ public class ThrownItem {
             @Override
             public void run() {
                 if (display.isDead()) {
-//					thrower.message("   This item display has been slated for collection!");
                     cancel();
                 }
 
@@ -372,13 +463,17 @@ public class ThrownItem {
         }.runTaskTimer(Sword.getInstance(), 1L, timingConfig.getDisposalCheckInterval());
     }
 
+
+
     /**
      * Handles logic when the thrown item successfully hits a living entity.
      * <p>
      * Manages impalement, knockback, pinning, and delayed disposal.
      */
-    public void onHit() {
+    public void onHit() { // TODO: break this method and all logic up...
         if (hitEntity == null) return;
+
+        thrower.message("onHit gets called.. Why no knockback for umbral blade");
 
         LivingEntity hit = hitEntity.entity();
         String name = display.getItemStack().getType().toString();
@@ -386,7 +481,7 @@ public class ThrownItem {
         if (name.endsWith("_SWORD") || name.endsWith("AXE")) {
             Vector kb = EntityUtil.isOnGround(hit) ?
                     velocity.clone().multiply(swordAxeDamage.getKnockbackGrounded()) :
-                    VectorUtil.getProjOntoPlane(velocity, Prefab.Direction.UP).multiply(swordAxeDamage.getKnockbackAirborne());
+                    VectorUtil.getProjOntoPlane(velocity, Prefab.Direction.UP()).multiply(swordAxeDamage.getKnockbackAirborne());
 
             impale(hit);
             hitEntity.hit(thrower,
@@ -396,9 +491,15 @@ public class ThrownItem {
                 swordAxeDamage.getSoulfireReduction(),
                 kb);
 
+            // TODO: since hit entity gets assigned as null, set up a method that assigns an entity and then uses that instead.
             new BukkitRunnable() {
                 @Override
                 public void run() {
+                    if (hitEntity == null) {
+                        cancel();
+                        return;
+                    }
+
                     RayTraceResult pinnedBlock = hit.getWorld().rayTraceBlocks(
                             hitEntity.getChestLocation(), velocity.clone().multiply(1.5),
                             0.5, FluidCollisionMode.NEVER,
@@ -417,6 +518,8 @@ public class ThrownItem {
                         public void run() {
                             if (display.isDead() || i > impalementConfig.getPinMaxIterations()) {
                                 hitEntity.setPinned(false);
+                                // TODO: change this logic for umbral blade.
+                                thrower.message("Disposing naturally from impale in onHit()");
                                 if (!display.isDead()) disposeNaturally();
                                 cancel();
                             }
@@ -432,12 +535,20 @@ public class ThrownItem {
             new BukkitRunnable() {
                 @Override
                 public void run() {
+                    if (display == null || hitEntity == null) {
+
+                        thrower.message("Disposing naturally from onHit()");
+                        disposeNaturally(); // TODO: remember me!
+                        cancel();
+                        return;
+                    }
+
                     if (display.isDead()) {
                         hitEntity.removeImpalement();
                         cancel();
                     }
                     else if (hitEntity.isDead()) {
-                        disposeNaturally();
+                        disposeNaturally(); // TODO: also change this logic
                         cancel();
                     }
                 }
@@ -464,7 +575,7 @@ public class ThrownItem {
      * <p>
      * Returns the item to inventory and disposes of the display.
      */
-    public void onCatch() {
+    protected void onCatch() {
         thrower.message("Caught it!");
         thrower.giveItem(display.getItemStack());
         dispose();
@@ -505,10 +616,12 @@ public class ThrownItem {
     public void hitCheck() {
         Predicate<Entity> effFilter = getFilter();
 
-        if (prev == null) disposeNaturally();
+        if (prev == null) {
+            thrower.message("Disposing cuz prev was null in hitCheck()");
+            disposeNaturally();
+        }
 
-        double entityRadius = ConfigManager.getInstance().getCombat().getHitboxes().getThrownItemEntityRadius();
-        RayTraceResult hitEntity = display.getWorld().rayTraceEntities(prev, velocity, initialVelocity, entityRadius, effFilter);
+        RayTraceResult hitEntity = display.getWorld().rayTraceEntities(prev, velocity, initialVelocity, 1, effFilter);
 
         if (hitEntity == null) return;
 
@@ -529,6 +642,7 @@ public class ThrownItem {
                         (entity instanceof LivingEntity l) &&
                         !l.isDead() &&
                         l.getType() != EntityType.ARMOR_STAND;
+        // Throwing a weapon should not immediately result in catching it, therefore a grace period is in place.
         int gracePeriod = ConfigManager.getInstance().getTiming().getThrownItems().getCatchGracePeriod();
         return t < gracePeriod ? entity -> filter.test(entity) && entity.getUniqueId() != thrower.getUniqueId() : filter;
     }
@@ -595,7 +709,8 @@ public class ThrownItem {
         var impalementConfig = ConfigManager.getInstance().getCombat().getImpalement();
         boolean followHead = !impalementConfig.getHeadFollowExceptions().contains(hitEntity.entity().getType())
                 && heightOffset >= diff * impalementConfig.getHeadZoneRatio();
-        EntityUtil.itemDisplayFollow(hitEntity, display,  velocity.clone().normalize(), heightOffset, followHead);
+        DisplayUtil.itemDisplayFollow(hitEntity, display,  velocity.clone().normalize(), heightOffset, followHead,
+            null, null, null, null);
     }
 
     /**
@@ -604,8 +719,10 @@ public class ThrownItem {
      * Used after hitting entities or ending its trajectory naturally.
      */
     public void disposeNaturally() {
-        Location dropLoc = hitEntity != null ? hitEntity.entity().getLocation() : display.getLocation();
-        Item dropped = hitEntity.entity().getWorld().dropItemNaturally(hitEntity.entity().getLocation(), display.getItemStack());
+        if (display == null) return;
+
+        final Location dropLocation = hitEntity != null ? hitEntity.entity().getLocation() : display.getLocation();
+        Item dropped = dropLocation.getWorld().dropItemNaturally(dropLocation, display.getItemStack());
         new BukkitRunnable() {
             @Override
             public void run() {
@@ -615,8 +732,7 @@ public class ThrownItem {
                 Prefab.Particles.DOPPED_ITEM_MARKER.display(dropped.getLocation());
             }
         }.runTaskTimer(Sword.getInstance(), 0L, 5L);
-        display.remove();
-        if (disposeTask != null && !disposeTask.isCancelled()) disposeTask.cancel();
+        dispose();
     }
 
     /**
@@ -625,7 +741,9 @@ public class ThrownItem {
      * Should be called when the thrown item is collected or deleted.
      */
     public void dispose() {
-        display.remove();
+        if (display != null) {
+            display.remove();
+        }
         if (disposeTask != null && !disposeTask.isCancelled()) disposeTask.cancel();
     }
 }

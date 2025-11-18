@@ -1,5 +1,16 @@
 package btm.sword.system.entity;
 
+import java.util.HashMap;
+import java.util.Objects;
+import java.util.UUID;
+
+import org.bukkit.Bukkit;
+import org.bukkit.World;
+import org.bukkit.entity.Entity;
+import org.bukkit.entity.LivingEntity;
+import org.bukkit.entity.Player;
+import org.bukkit.scheduler.BukkitRunnable;
+
 import btm.sword.Sword;
 import btm.sword.system.entity.base.CombatProfile;
 import btm.sword.system.entity.base.SwordEntity;
@@ -7,13 +18,6 @@ import btm.sword.system.entity.types.Hostile;
 import btm.sword.system.entity.types.Passive;
 import btm.sword.system.entity.types.SwordPlayer;
 import btm.sword.system.playerdata.PlayerDataManager;
-import java.util.*;
-import org.bukkit.Bukkit;
-import org.bukkit.World;
-import org.bukkit.entity.Entity;
-import org.bukkit.entity.LivingEntity;
-import org.bukkit.entity.Player;
-import org.bukkit.scheduler.BukkitRunnable;
 
 /**
  * Manages registration, storage, and retrieval of SwordEntity instances,
@@ -112,11 +116,11 @@ public class SwordEntityArbiter {
         SwordEntity swordEntity = get(uuid);
         if (swordEntity != null) return swordEntity;
 
-        LivingEntity bukkitEntity = (LivingEntity) Bukkit.getEntity(uuid);
-        assert bukkitEntity != null;
-        register(bukkitEntity);
-
-        return get(uuid);
+        if (Bukkit.getEntity(uuid) instanceof LivingEntity livingEntity) {
+            register(livingEntity);
+            return get(uuid);
+        }
+        return null;
     }
 
     /**
@@ -141,7 +145,7 @@ public class SwordEntityArbiter {
 
     public static void removeAllDisplays() {
         for (SwordEntity player : onlineSwordPlayers.values()) {
-            ((SwordPlayer) player).endSheathedWeapon();
+            ((SwordPlayer) player).endUmbralBlade();
             player.endStatusDisplay();
         }
     }

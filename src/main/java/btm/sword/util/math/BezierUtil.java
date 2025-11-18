@@ -3,6 +3,7 @@ package btm.sword.util.math;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
+
 import org.bukkit.util.Vector;
 
 /**
@@ -62,7 +63,7 @@ public class BezierUtil {
 
     /**
      * Applies a basis transformation and scaling to each control vector.
-     * Relies on {@link VectorUtil#transformWithNewBasis(List, Vector)} for basis transformation,
+     * Relies on {@link VectorUtil#transformWithNewBasis(Basis, Vector)} for basis transformation,
      * then scales the result.
      *
      * @param basis list of {@link Vector} specifying the new basis
@@ -70,7 +71,7 @@ public class BezierUtil {
      * @param multiplier scalar value to multiply each transformed vector by
      * @return list of transformed {@link Vector}s with basis and scaling applied
      */
-    public static List<Vector> adjustCtrlToBasis(List<Vector> basis, List<Vector> controlVectors, double multiplier) {
+    public static List<Vector> adjustCtrlToBasis(Basis basis, List<Vector> controlVectors, double multiplier) {
         return controlVectors.stream().map(v -> VectorUtil.transformWithNewBasis(basis, v).multiply(multiplier)).toList();
     }
 
