@@ -37,7 +37,6 @@ import btm.sword.system.entity.umbral.statemachine.UmbralStateFacade;
 import btm.sword.system.entity.umbral.statemachine.UmbralStateMachine;
 import btm.sword.system.entity.umbral.statemachine.state.AttackingHeavyState;
 import btm.sword.system.entity.umbral.statemachine.state.AttackingQuickState;
-import btm.sword.system.entity.umbral.statemachine.state.FlyingState;
 import btm.sword.system.entity.umbral.statemachine.state.InactiveState;
 import btm.sword.system.entity.umbral.statemachine.state.LodgedState;
 import btm.sword.system.entity.umbral.statemachine.state.LungingState;
