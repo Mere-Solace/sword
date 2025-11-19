@@ -66,7 +66,7 @@ public class DisplayUtil {
         return new BukkitRunnable() {
             @Override
             public void run() {
-                if (!entity.isValid() || !display.isValid()) {
+                if (entity.isInvalid() || !display.isValid()) {
                     if (display.isValid() && removeOnArrival) display.remove();
                     if (callback != null) {
                         Bukkit.getScheduler().runTask(Sword.getInstance(), callback);

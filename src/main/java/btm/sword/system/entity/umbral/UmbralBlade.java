@@ -5,6 +5,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
+import btm.sword.system.entity.umbral.statemachine.state.GroundedState;
+
 import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -83,7 +85,8 @@ public class UmbralBlade extends ThrownItem {
 
     private Vector3f scale = new Vector3f(0.85f, 1.3f, 1f);
 
-    private static final int idleMovementPeriod = 5;
+    private static final int idleMovementPeriod = 3;
+    private static final float idleMovementAmplitude = 0.25f;
     private BukkitTask idleMovement;
 
     private final Predicate<UmbralBlade> endHoverPredicate;
@@ -337,14 +340,14 @@ public class UmbralBlade extends ThrownItem {
         bladeStateMachine.addTransition(new Transition<>(
             LodgedState.class,
             ReturningState.class,
-            blade -> hitEntity == null || !hitEntity.isValid(),
+            blade -> (hitEntity == null || hitEntity.isInvalid()) && !grounded,
             blade -> {}
         ));
 
         bladeStateMachine.addTransition(new Transition<>(
             LodgedState.class,
-            WieldState.class,
-            blade -> isRequestedAndActive(BladeRequest.WIELD),
+            AttackingQuickState.class,
+            blade -> false, //isRequestedAndActive(BladeRequest.ATTACK_QUICK), // TODO: and something else?
             blade -> {}
         ));
 
@@ -370,6 +373,31 @@ public class UmbralBlade extends ThrownItem {
             ReturningState.class,
             blade -> finishedLunging,
             blade -> {}
+        ));
+
+        bladeStateMachine.addTransition(new Transition<>(
+            LungingState.class,
+            GroundedState.class,
+            blade -> grounded,
+            blade -> { finishedLunging = false; }
+        ));
+
+        // =====================================================================
+        // GROUNDED
+        // =====================================================================
+        bladeStateMachine.addTransition(new Transition<>(
+            GroundedState.class,
+            RecallingState.class,
+            blade -> isRequestedAndActive(BladeRequest.RECALL),
+            blade -> {
+                if (blockDustPillarParticle != null) {
+                    blockDustPillarParticle.display(display.getLocation());
+                }
+                DisplayUtil.smoothTeleport(blade.getDisplay(), 10);
+                blade.getDisplay().teleport(
+                    blade.getDisplay().getLocation().subtract(
+                        blade.getDisplay().getLocation().getDirection().multiply(6)));
+            }
         ));
     }
 
@@ -398,7 +426,7 @@ public class UmbralBlade extends ThrownItem {
     }
 
     public void onTick() {
-        if (!thrower.isValid()) {
+        if (thrower.isInvalid()) {
             thrower.message("Ending Umbral Blade");
             dispose();
         }
@@ -451,13 +479,13 @@ public class UmbralBlade extends ThrownItem {
                 new Quaternionf()
             );
         }
-        else if (state == LodgedState.class) {
+        else if (state == LodgedState.class || state == GroundedState.class) {
             return display.getTransformation();
         }
         else if (state == AttackingQuickState.class || state == AttackingHeavyState.class) {
             return new Transformation(
-                new Vector3f(0, 0, -1), // TODO: fix so tip of blade is at particles
-                new Quaternionf().rotateX((float) Math.PI/2), // TODO - test
+                new Vector3f(0, 0, -1),
+                new Quaternionf().rotateX((float) Math.PI/2),
                 scale,
                 new Quaternionf());
         }
@@ -489,9 +517,6 @@ public class UmbralBlade extends ThrownItem {
 
     public void updateSheathedPosition() {
         if (inState(WaitingState.class)) return;
-
-        long[] lastTimeSent = { System.currentTimeMillis() };
-
         int x = 3;
         for (int i = 0; i < x; i++) {
             SwordScheduler.runBukkitTaskLater(new BukkitRunnable() {
@@ -500,16 +525,8 @@ public class UmbralBlade extends ThrownItem {
                     DisplayUtil.smoothTeleport(display, 2);
                     display.teleport(thrower.entity().getLocation().setDirection(thrower.getFlatDir()));
                     thrower.entity().addPassenger(display);
-
-                    //TODO: Remove later
-                    if (System.currentTimeMillis() - lastTimeSent[0] > 1500) {
-                        lastTimeSent[0] = System.currentTimeMillis();
-                        thrower.message("Updating pos apparently...");
-                    }
-
                 }
-            }, 50/x, TimeUnit.MILLISECONDS);  // 50 because that's the millisecond value of a tick
-                                                    // TODO Prefab or config value
+            }, 50/x, TimeUnit.MILLISECONDS);
         }
     }
 
@@ -518,10 +535,17 @@ public class UmbralBlade extends ThrownItem {
             double step = 0;
             @Override
             public void run() {
+                DisplayUtil.setInterpolationValues(display, 0, idleMovementPeriod);
+                display.setTransformation(
+                    new Transformation(
+                        new Vector3f(0, (float) Math.cos(step) * idleMovementAmplitude, 0),
+                        display.getTransformation().getLeftRotation(),
+                        scale,
+                        new Quaternionf()
+                    )
+                );
 
-                // TODO implement a sinusoidal solution.
-
-                step += Math.PI/3;
+                step += Math.PI/8;
             }
         }.runTaskTimer(Sword.getInstance(), 0L, idleMovementPeriod);
     }
@@ -537,12 +561,10 @@ public class UmbralBlade extends ThrownItem {
 
     public BukkitTask returnToWielderAndRequestState(BladeRequest request) {
         return DisplayUtil.displaySlerpToOffset(thrower, display,
-            thrower.getChestVector(), 1.75, 5, 2, 0.8, false,
+            thrower.getChestVector(), 1.75, 5, 2, 1.5, false,
             new BukkitRunnable() {
                 @Override
                 public void run() {
-                    thrower.message("I have returned.");
-
                     request(request);
                 }
             });
@@ -553,7 +575,7 @@ public class UmbralBlade extends ThrownItem {
         Attack attack;
         Location attackOrigin;
 
-        if (target == null || !target.isValid()) {
+        if (target == null || target.isInvalid()) {
             attackOrigin = thrower.getChestLocation().clone()
                 .add(thrower.entity().getEyeLocation().getDirection().multiply(range));
         }
@@ -752,13 +774,12 @@ public class UmbralBlade extends ThrownItem {
     @Override
     protected void onEnd() {
         super.onEnd();
-        finishedLunging = true;
+        if (!grounded) finishedLunging = true;
     }
 
     @Override
     protected void handleOnReleaseActions() {
         Prefab.Sounds.THROW.play(getThrower().entity());
-//        InteractiveItemArbiter.put(this); // TODO: figure out interactive behaviour...
     }
 
     @Override
@@ -773,9 +794,11 @@ public class UmbralBlade extends ThrownItem {
     }
 
     public void cleanupBeforeNewThrow() {
+        t = 0;
         hit = false;
         grounded = false;
         caught = false;
         hitEntity = null;
+        stuckBlock = null;
     }
 }

@@ -103,6 +103,15 @@ public abstract class Combatant extends SwordEntity {
     }
 
     @Override
+    public void onZeroHealth() {
+        super.onZeroHealth();
+        if (umbralBlade != null && umbralBlade.getDisplay().isValid()) {
+            Prefab.Particles.UMBRAL_POOF.display(umbralBlade.getDisplay().getLocation());
+            umbralBlade.dispose();
+        }
+    }
+
+    @Override
     protected void onTick() {
         super.onTick();
         handleUmbralBladeTick();

@@ -333,6 +333,10 @@ public abstract class SwordEntity {
         aspects.stopAllResourceTasks();
     }
 
+    public void onZeroHealth() {
+
+    }
+
     /**
      * Gets the underlying {@link LivingEntity} wrapped by this SwordEntity.
      *
@@ -342,8 +346,8 @@ public abstract class SwordEntity {
         return self;
     }
 
-    public boolean isValid() {
-        return entity().isValid();
+    public boolean isInvalid() {
+        return !entity().isValid();
     }
 
     /**
@@ -432,6 +436,7 @@ public abstract class SwordEntity {
                 self.damage(74077740, source.entity());
                 if (!self.isDead())
                     self.setHealth(0);
+                onZeroHealth();
                 return;
             }
             shardsLost += baseNumShards;

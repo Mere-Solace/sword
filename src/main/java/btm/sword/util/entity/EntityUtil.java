@@ -16,7 +16,6 @@ public class EntityUtil {
     private EntityUtil() {
         throw new UnsupportedOperationException("Utility class");
     }
-
     /**
      * Checks whether the specified {@link Entity} is currently on the ground.
      * This method checks blocks slightly below the entity's location to determine if it stands on solid ground.
@@ -28,7 +27,7 @@ public class EntityUtil {
         double maxCheckDist = ConfigManager.getInstance().getDetection().getGroundCheckMaxDistance();
         Location base = entity.getLocation().add(new Vector(0, -maxCheckDist, 0));
 
-        double[] offsets = {0};
+        double[] offsets = {-0.3, 0, 0.3};
 
         for (double x : offsets) {
             for (double z : offsets) {

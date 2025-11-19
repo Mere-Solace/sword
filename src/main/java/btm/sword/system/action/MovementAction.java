@@ -73,7 +73,7 @@ public class MovementAction extends SwordAction {
                                 !entity.isDead() &&
                                 entity instanceof ItemDisplay id &&
                                 InteractiveItemArbiter.checkIfInteractive(id)) &&
-                                !InteractiveItemArbiter.isImaplingEntity(SwordEntityArbiter.get(ex.getUniqueId()), id));
+                                !InteractiveItemArbiter.isImpaling(SwordEntityArbiter.get(ex.getUniqueId()), id));
 //                executor.message("Targeted: " + targetedItem);
 
                 if (targetedItem instanceof ItemDisplay id &&

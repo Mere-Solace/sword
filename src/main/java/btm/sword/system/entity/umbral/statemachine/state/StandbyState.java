@@ -1,5 +1,6 @@
 package btm.sword.system.entity.umbral.statemachine.state;
 
+import org.bukkit.Color;
 import org.bukkit.scheduler.BukkitTask;
 
 import btm.sword.system.entity.types.SwordPlayer;
@@ -16,6 +17,9 @@ public class StandbyState extends UmbralStateFacade {
 
     @Override
     public void onEnter(UmbralBlade blade) {
+        blade.getDisplay().setGlowing(true);
+        blade.getDisplay().setGlowColorOverride(Color.fromRGB(1, 1, 1));
+
         followTask = blade.hoverBehindWielder();
         blade.startIdleMovement();
         if (blade.getThrower() instanceof SwordPlayer swordPlayer) {
@@ -26,6 +30,8 @@ public class StandbyState extends UmbralStateFacade {
 
     @Override
     public void onExit(UmbralBlade blade) {
+        blade.getDisplay().setGlowing(false);
+
         blade.endIdleMovement();
         if (followTask != null && followTask.getTaskId() != -1 && !followTask.isCancelled())
             followTask.cancel();

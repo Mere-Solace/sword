@@ -47,6 +47,7 @@ public class InputListener implements Listener {
     @EventHandler
     public void onNormalAttack(PrePlayerAttackEntityEvent event) {
         SwordPlayer swordPlayer = (SwordPlayer) SwordEntityArbiter.getOrAdd(event.getPlayer().getUniqueId());
+        if (swordPlayer == null) return;
         ItemStack item = swordPlayer.getItemStackInHand(true);
 
         if (swordPlayer.cancelItemInteraction(item, InputType.LEFT)) {
@@ -72,11 +73,15 @@ public class InputListener implements Listener {
     @EventHandler
     public void onPlayerInteract(PlayerInteractEvent event) {
         SwordPlayer swordPlayer = (SwordPlayer) SwordEntityArbiter.getOrAdd(event.getPlayer().getUniqueId());
+        if (swordPlayer == null) return;
         ItemStack item = swordPlayer.getItemStackInHand(true);
 
         Action action = event.getAction();
 
         if (swordPlayer.hasPerformedDropAction()) return;
+
+        // TODO: log all interactions and figure out if this fires when PrePlayerAttack fires.
+        // TODO: ^^^ if so, use the flag set in the above method to cancel this event and return.
 
         if ((action == Action.LEFT_CLICK_AIR || action == Action.LEFT_CLICK_BLOCK)) {
             if (swordPlayer.cancelItemInteraction(item, InputType.LEFT)) {
@@ -118,6 +123,7 @@ public class InputListener implements Listener {
     public void onPlayerEntityInteract(PlayerInteractEntityEvent event) {
         Sword.print("Interacted with entity");
         SwordPlayer swordPlayer = (SwordPlayer) SwordEntityArbiter.getOrAdd(event.getPlayer().getUniqueId());
+        if (swordPlayer == null) return;
         ItemStack item = swordPlayer.getItemStackInHand(true);
 
         swordPlayer.setInteractingWithEntity(true);
@@ -134,7 +140,7 @@ public class InputListener implements Listener {
 
         event.setCancelled(true);
 
-        event.getRightClicked();
+//        event.getRightClicked(); // For later use, not need currently.
     }
 
     @EventHandler
@@ -154,6 +160,7 @@ public class InputListener implements Listener {
     @EventHandler
     public void onPlayerDropEvent(PlayerDropItemEvent event) {
         SwordPlayer swordPlayer = (SwordPlayer) SwordEntityArbiter.getOrAdd(event.getPlayer().getUniqueId());
+        if (swordPlayer == null) return;
         ItemStack item = swordPlayer.getItemStackInHand(true);
 
         // Prevent dropping the menu button
@@ -190,6 +197,7 @@ public class InputListener implements Listener {
     @EventHandler
     public void onSneakEvent(PlayerToggleSneakEvent event) {
         SwordPlayer swordPlayer = (SwordPlayer) SwordEntityArbiter.getOrAdd(event.getPlayer().getUniqueId());
+        if (swordPlayer == null) return;
 
         if (event.isSneaking()) {
             swordPlayer.act(InputType.SHIFT);
@@ -211,6 +219,7 @@ public class InputListener implements Listener {
     @EventHandler
     public void onSwapEvent(PlayerSwapHandItemsEvent event) {
         SwordPlayer swordPlayer = (SwordPlayer) SwordEntityArbiter.getOrAdd(event.getPlayer().getUniqueId());
+        if (swordPlayer == null) return;
         ItemStack item = swordPlayer.getItemStackInHand(true);
 
         if (swordPlayer.cancelItemInteraction(item, InputType.SWAP)) {
@@ -234,6 +243,7 @@ public class InputListener implements Listener {
     @EventHandler
     public void onChangeItemEvent(PlayerItemHeldEvent event) {
         SwordPlayer swordPlayer = (SwordPlayer) SwordEntityArbiter.getOrAdd(event.getPlayer().getUniqueId());
+        if (swordPlayer == null) return;
         swordPlayer.setChangingHandIndex(true);
 
         if (swordPlayer.inputReliantOnItem()) {

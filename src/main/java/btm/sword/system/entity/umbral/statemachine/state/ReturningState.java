@@ -1,6 +1,7 @@
 package btm.sword.system.entity.umbral.statemachine.state;
 
 
+import org.bukkit.Color;
 import org.bukkit.Location;
 import org.bukkit.scheduler.BukkitTask;
 import org.bukkit.util.Vector;
@@ -26,11 +27,17 @@ public class ReturningState extends UmbralStateFacade {
 
     @Override
     public void onEnter(UmbralBlade blade) {
+        blade.getDisplay().setGlowing(true);
+        blade.getDisplay().setGlowColorOverride(Color.fromRGB(1, 1, 1));
+
+        previousBladeLocation = blade.getDisplay().getLocation();
         returnTask = blade.returnToWielderAndRequestState(BladeRequest.STANDBY);
     }
 
     @Override
     public void onExit(UmbralBlade blade) {
+        blade.getDisplay().setGlowing(false);
+
         if (returnTask != null && !returnTask.isCancelled() && returnTask.getTaskId() != -1) {
             returnTask.cancel();
         }

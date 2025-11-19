@@ -75,13 +75,14 @@ public class ThrownItem {
 
     protected double initialVelocity;
 
-    int t = 0;
+    protected int t = 0;
 
     protected Function<Double, Vector> positionFunction;
     protected Function<Double, Vector> velocityFunction;
 
     protected boolean grounded;
     protected Block stuckBlock;
+    protected ParticleWrapper blockDustPillarParticle;
 
     protected boolean hit;
     protected SwordEntity hitEntity;
@@ -145,6 +146,10 @@ public class ThrownItem {
         xDisplayOffset = ConfigManager.getInstance().getPhysics().getThrownItems().getDisplayOffsetX();
         yDisplayOffset = ConfigManager.getInstance().getPhysics().getThrownItems().getDisplayOffsetY();
         zDisplayOffset = ConfigManager.getInstance().getPhysics().getThrownItems().getDisplayOffsetZ();
+    }
+
+    public void setTimeScalingFactor(double numberOfIterations) {
+        this.timeScalingFactor = (this.timeCutoff > 0 ? timeCutoff : 1)/numberOfIterations;
     }
 
     /**
@@ -237,16 +242,8 @@ public class ThrownItem {
 
         new BukkitRunnable() {
             @Override
-            public void run() {                                             // TODO: is this correct?
+            public void run() {
                 if (grounded || hit || caught || display.isDead() || (timeCutoff > 0 && t * timeScalingFactor > timeCutoff)) {
-                    String reason = grounded ? "grounded" :
-                        hit ? "hit" :
-                            caught ? "caught" :
-                                display.isDead() ? "display dead" :
-                                    (timeCutoff > 0 && t > timeCutoff) ? "time cutoff" :
-                                        "unknown";
-                    thrower.message("Ending due to: " + reason);
-
                     onEnd();
                     cancel();
                     return;
@@ -254,7 +251,6 @@ public class ThrownItem {
 
                 applyFunctions();
 
-                // TODO: still need to fix that nose not coming back down on fall for swords...
                 if (!prev.equals(cur) && cur.clone().subtract(prev).toVector().dot(velocity) > 0) {
                     DisplayUtil.smoothTeleport(display, 1);
                 }
@@ -262,8 +258,8 @@ public class ThrownItem {
                 teleport();
                 rotate();
 
-                Prefab.Particles.THROW_TRAIl.display(cur);
-                if (blockTrail != null && t % 3 == 0)
+                Prefab.Particles.THROW_TRAIl.display(cur); // TODO: make type of particles dynamic
+                if (blockTrail != null && t % 3 == 0) // TODO: and make period dynamic
                     blockTrail.display(cur);
 
                 evaluate();
@@ -307,8 +303,7 @@ public class ThrownItem {
     protected void generateFunctions(double initialVelocity) {
         calculatePhysicsFunctions(initialVelocity);
     }
-    // TODO: ^^ correctly calc origin and direction for the non-physical trajectory
-    // TODO: make dynamic so targeted entity location is targeted.
+
     private void calculatePhysicsFunctions(double initialVelocity) {
         this.initialVelocity = initialVelocity;
 
@@ -404,7 +399,6 @@ public class ThrownItem {
         if (caught) onCatch();
         else if (hit) onHit();
         else if (grounded) onGrounded();
-        t = 0; // TODO: Make better reset method if this is not the only cleanup to perform
     }
 
     /**
@@ -413,18 +407,20 @@ public class ThrownItem {
      * Creates marker particles, positions the display, and schedules timed cleanup.
      */
     public void onGrounded() {
-        if (stuckBlock != null)
-            new ParticleWrapper(Particle.DUST_PILLAR, 50, 1, 1, 1, stuckBlock.getBlockData()).display(cur);
-
+        if (stuckBlock != null) {
+            this.blockDustPillarParticle = new ParticleWrapper(Particle.DUST_PILLAR, 50, 1, 1, 1, stuckBlock.getBlockData());
+            blockDustPillarParticle.display(cur);
+        }
         double offset = 0.1;
-        Vector step = velocity.normalize().multiply(offset);
+        Vector n = velocity.normalize();
+        Vector step = n.clone().multiply(offset);
 
         ArmorStand marker = (ArmorStand) display.getWorld().spawnEntity(cur, EntityType.ARMOR_STAND);
         marker.setGravity(false);
         marker.setVisible(false);
 
         int x = 1;
-        while (!marker.getLocation().getBlock().isPassable()) { // changed from getType().isAir()
+        while (!marker.getLocation().getBlock().isPassable()) {
             marker.teleport(cur.clone().add(velocity.normalize().multiply(-0.1 * x)));
             x++;
             if (x > 30) break;
@@ -435,11 +431,15 @@ public class ThrownItem {
             public void run() {
                 cur = marker.getLocation();
                 DisplayUtil.smoothTeleport(display, 1);
-                display.teleport(cur.clone().setDirection(velocityFunction.apply((double) t + 1)));
+                display.teleport(cur.clone().setDirection(n));
                 marker.remove();
             }
         }.runTaskLater(Sword.getInstance(), 1L);
 
+        startDisposeTask(step);
+    }
+
+    protected void startDisposeTask(Vector step) {
         var timingConfig = ConfigManager.getInstance().getTiming().getThrownItems();
         disposeTask = new BukkitRunnable() {
             int tick = 0;
@@ -463,111 +463,118 @@ public class ThrownItem {
         }.runTaskTimer(Sword.getInstance(), 1L, timingConfig.getDisposalCheckInterval());
     }
 
-
-
     /**
      * Handles logic when the thrown item successfully hits a living entity.
      * <p>
      * Manages impalement, knockback, pinning, and delayed disposal.
      */
-    public void onHit() { // TODO: break this method and all logic up...
+    public void onHit() {
         if (hitEntity == null) return;
 
-        thrower.message("onHit gets called.. Why no knockback for umbral blade");
-
-        LivingEntity hit = hitEntity.entity();
+        // TODO: Better checks for weapon, can tag with impactType = 'impale'
         String name = display.getItemStack().getType().toString();
-        var swordAxeDamage = ConfigManager.getInstance().getCombat().getThrownDamage().getSwordAxe();
+
         if (name.endsWith("_SWORD") || name.endsWith("AXE")) {
-            Vector kb = EntityUtil.isOnGround(hit) ?
-                    velocity.clone().multiply(swordAxeDamage.getKnockbackGrounded()) :
-                    VectorUtil.getProjOntoPlane(velocity, Prefab.Direction.UP()).multiply(swordAxeDamage.getKnockbackAirborne());
-
-            impale(hit);
-            hitEntity.hit(thrower,
-                swordAxeDamage.getInvulnerabilityTicks(),
-                swordAxeDamage.getBaseShards(),
-                swordAxeDamage.getToughnessDamage(),
-                swordAxeDamage.getSoulfireReduction(),
-                kb);
-
-            // TODO: since hit entity gets assigned as null, set up a method that assigns an entity and then uses that instead.
-            new BukkitRunnable() {
-                @Override
-                public void run() {
-                    if (hitEntity == null) {
-                        cancel();
-                        return;
-                    }
-
-                    RayTraceResult pinnedBlock = hit.getWorld().rayTraceBlocks(
-                            hitEntity.getChestLocation(), velocity.clone().multiply(1.5),
-                            0.5, FluidCollisionMode.NEVER,
-                            true);
-
-                    if (pinnedBlock == null || pinnedBlock.getHitBlock() == null || pinnedBlock.getHitBlock().getType().isAir()) return;
-
-                    thrower.message("Pinned that infidel!");
-                    float yaw = cur.setDirection(velocity.clone().multiply(-1)).getYaw();
-                    hitEntity.entity().setBodyYaw(yaw);
-                    hitEntity.setPinned(true);
-                    var impalementConfig = ConfigManager.getInstance().getCombat().getImpalement();
-                    new BukkitRunnable() {
-                        int i = 0;
-                        @Override
-                        public void run() {
-                            if (display.isDead() || i > impalementConfig.getPinMaxIterations()) {
-                                hitEntity.setPinned(false);
-                                // TODO: change this logic for umbral blade.
-                                thrower.message("Disposing naturally from impale in onHit()");
-                                if (!display.isDead()) disposeNaturally();
-                                cancel();
-                            }
-                            hitEntity.entity().setBodyYaw(yaw);
-                            hitEntity.entity().setVelocity(new Vector());
-
-                            i += impalementConfig.getPinCheckInterval();
-                        }
-                    }.runTaskTimer(Sword.getInstance(), 0L, impalementConfig.getPinCheckInterval());
-                }
-            }.runTaskLater(Sword.getInstance(), ConfigManager.getInstance().getTiming().getThrownItems().getPinDelay());
-
-            new BukkitRunnable() {
-                @Override
-                public void run() {
-                    if (display == null || hitEntity == null) {
-
-                        thrower.message("Disposing naturally from onHit()");
-                        disposeNaturally(); // TODO: remember me!
-                        cancel();
-                        return;
-                    }
-
-                    if (display.isDead()) {
-                        hitEntity.removeImpalement();
-                        cancel();
-                    }
-                    else if (hitEntity.isDead()) {
-                        disposeNaturally(); // TODO: also change this logic
-                        cancel();
-                    }
-                }
-            }.runTaskTimer(Sword.getInstance(), 0L, 1L);
+            startImpalementTask(hitEntity);
+            startLifecycleCheckTask(hitEntity);
         }
         else {
-            var otherDamage = ConfigManager.getInstance().getCombat().getThrownDamage().getOther();
-            hitEntity.hit(thrower,
-                otherDamage.getInvulnerabilityTicks(),
-                otherDamage.getBaseShards(),
-                otherDamage.getToughnessDamage(),
-                otherDamage.getSoulfireReduction(),
-                velocity.clone().multiply(otherDamage.getKnockbackMultiplier()));
-            hit.getWorld().createExplosion(hitEntity.getChestLocation(),
-                otherDamage.getExplosionPower(),
-                ConfigManager.getInstance().getWorld().isExplosionsSetFire(),
-                ConfigManager.getInstance().getWorld().isExplosionsBreakBlocks());
-            disposeNaturally();
+            nonImpalingImpact(hitEntity);
         }
+    }
+
+    protected void nonImpalingImpact(SwordEntity target) {
+        var otherDamage = ConfigManager.getInstance().getCombat().getThrownDamage().getOther();
+
+        target.hit(thrower,
+            otherDamage.getInvulnerabilityTicks(),
+            otherDamage.getBaseShards(),
+            otherDamage.getToughnessDamage(),
+            otherDamage.getSoulfireReduction(),
+            velocity.clone().multiply(otherDamage.getKnockbackMultiplier()));
+
+        target.entity().getWorld().createExplosion(target.getChestLocation(),
+            otherDamage.getExplosionPower(),
+            ConfigManager.getInstance().getWorld().isExplosionsSetFire(),
+            ConfigManager.getInstance().getWorld().isExplosionsBreakBlocks());
+
+        disposeNaturally();
+    }
+
+    private void startImpalementTask(SwordEntity target) {
+        var swordAxeDamage = ConfigManager.getInstance().getCombat().getThrownDamage().getSwordAxe();
+
+        Vector kb = EntityUtil.isOnGround(target.entity()) ?
+            velocity.clone().multiply(swordAxeDamage.getKnockbackGrounded()) :
+            VectorUtil.getProjOntoPlane(velocity, Prefab.Direction.UP()).multiply(swordAxeDamage.getKnockbackAirborne());
+
+        impale(target.entity());
+        target.hit(thrower,
+            swordAxeDamage.getInvulnerabilityTicks(),
+            swordAxeDamage.getBaseShards(),
+            swordAxeDamage.getToughnessDamage(),
+            swordAxeDamage.getSoulfireReduction(),
+            kb);
+
+        new BukkitRunnable() {
+            @Override
+            public void run() {
+                RayTraceResult pinnedBlock = target.entity().getWorld().rayTraceBlocks(
+                    target.getChestLocation(), velocity.clone().multiply(1.5),
+                    0.5, FluidCollisionMode.NEVER,
+                    true);
+
+                if (pinnedBlock == null || pinnedBlock.getHitBlock() == null || pinnedBlock.getHitBlock().getType().isAir())
+                    return;
+
+                startPinCheckTask(target);
+            }
+        }.runTaskLater(Sword.getInstance(), ConfigManager.getInstance().getTiming().getThrownItems().getPinDelay());
+    }
+
+    protected void startPinCheckTask(SwordEntity target) {
+        float yaw = cur.setDirection(velocity.clone().multiply(-1)).getYaw();
+        target.entity().setBodyYaw(yaw);
+        target.setPinned(true);
+
+        var impalementConfig = ConfigManager.getInstance().getCombat().getImpalement();
+        new BukkitRunnable() {
+            int i = 0;
+            @Override
+            public void run() {
+                if (display.isDead() || i > impalementConfig.getPinMaxIterations()) {
+                    target.setPinned(false);
+                    if (!display.isDead()) disposeNaturally();
+                    cancel();
+                }
+                target.entity().setBodyYaw(yaw);
+                target.entity().setVelocity(new Vector());
+
+                i += impalementConfig.getPinCheckInterval();
+            }
+        }.runTaskTimer(Sword.getInstance(), 0L, impalementConfig.getPinCheckInterval());
+    }
+
+    protected void startLifecycleCheckTask(SwordEntity target) {
+        new BukkitRunnable() {
+            @Override
+            public void run() {
+                if (display == null || target == null) {
+                    disposeNaturally();
+                    cancel();
+                    return;
+                }
+
+                if (display.isDead()) {
+                    target.removeImpalement();
+                    cancel();
+                }
+                else if (target.isDead()) {
+                    disposeNaturally();
+                    cancel();
+                }
+            }
+        }.runTaskTimer(Sword.getInstance(), 0L, 1L);
     }
 
     /**
@@ -596,9 +603,14 @@ public class ThrownItem {
      * Checks if the thrown item has collided with a block and become grounded.
      */
     public void groundedCheck() {
-        RayTraceResult hitBlock = display.getWorld().rayTraceBlocks(cur, velocity, initialVelocity, FluidCollisionMode.NEVER, true);
+        RayTraceResult hitBlock = display.getWorld()
+            .rayTraceBlocks(cur, velocity,
+                cur.toVector().subtract(prev.toVector()).lengthSquared()*0.6,
+                FluidCollisionMode.NEVER, true);
 
-        if (hitBlock == null) return;
+        if (hitBlock == null) {
+            return;
+        }
 
         if (hitBlock.getHitBlock() == null || hitBlock.getHitBlock().getType().isAir())
             return;
@@ -621,7 +633,10 @@ public class ThrownItem {
             disposeNaturally();
         }
 
-        RayTraceResult hitEntity = display.getWorld().rayTraceEntities(prev, velocity, initialVelocity, 1, effFilter);
+        RayTraceResult hitEntity = display.getWorld()
+            .rayTraceEntities(prev, velocity,
+                cur.toVector().subtract(prev.toVector()).lengthSquared()*0.6,
+                1, effFilter);
 
         if (hitEntity == null) return;
 

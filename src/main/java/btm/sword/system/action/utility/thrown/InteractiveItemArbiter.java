@@ -46,7 +46,7 @@ public class InteractiveItemArbiter {
         return thrownItems.containsKey(id);
     }
 
-    public static boolean isImaplingEntity(SwordEntity self, ItemDisplay targeted) {
+    public static boolean isImpaling(SwordEntity self, ItemDisplay targeted) {
         ThrownItem thrown = thrownItems.getOrDefault(targeted, null);
         return thrown != null && thrown.getHitEntity() != null && thrown.getHitEntity().equals(self);
     }
@@ -85,9 +85,6 @@ public class InteractiveItemArbiter {
 
         if (!item.isEmpty()) {
             if (thrownItem instanceof UmbralBlade umbralBlade) {
-                // TODO: remove ->
-                executor.message("Harro, dis is umbral blade!");
-
                 umbralBlade.onGrab(executor);
                 return;
             }
@@ -116,6 +113,7 @@ public class InteractiveItemArbiter {
      * Disposes of all registered thrown items and clears the registry.
      */
     public static void cleanupAll() {
+        // TODO: Issue #81 considerations
         for (ThrownItem thrownItem : thrownItems.values()) {
             thrownItem.dispose();
         }
