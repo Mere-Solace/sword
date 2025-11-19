@@ -16,6 +16,7 @@ public class LungingState extends UmbralStateFacade {
 
     @Override
     public void onEnter(UmbralBlade blade) {
+        blade.setHitEntity(null);
         blade.setFinishedLunging(false);
         blade.setTimeCutoff(1.2);
         blade.setTimeScalingFactor(9);

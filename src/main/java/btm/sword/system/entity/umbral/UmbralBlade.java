@@ -5,11 +5,12 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
-import btm.sword.system.entity.umbral.statemachine.state.GroundedState;
+import btm.sword.util.display.ParticleWrapper;
 
 import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.Particle;
 import org.bukkit.entity.Display;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.ItemDisplay;
@@ -340,14 +341,14 @@ public class UmbralBlade extends ThrownItem {
         bladeStateMachine.addTransition(new Transition<>(
             LodgedState.class,
             ReturningState.class,
-            blade -> (hitEntity == null || hitEntity.isInvalid()) && !grounded,
+            blade -> hitEntity == null || hitEntity.isInvalid(),
             blade -> {}
         ));
 
         bladeStateMachine.addTransition(new Transition<>(
             LodgedState.class,
-            AttackingQuickState.class,
-            blade -> false, //isRequestedAndActive(BladeRequest.ATTACK_QUICK), // TODO: and something else?
+            WieldState.class,
+            blade -> isRequestedAndActive(BladeRequest.WIELD),
             blade -> {}
         ));
 
@@ -373,31 +374,6 @@ public class UmbralBlade extends ThrownItem {
             ReturningState.class,
             blade -> finishedLunging,
             blade -> {}
-        ));
-
-        bladeStateMachine.addTransition(new Transition<>(
-            LungingState.class,
-            GroundedState.class,
-            blade -> grounded,
-            blade -> { finishedLunging = false; }
-        ));
-
-        // =====================================================================
-        // GROUNDED
-        // =====================================================================
-        bladeStateMachine.addTransition(new Transition<>(
-            GroundedState.class,
-            RecallingState.class,
-            blade -> isRequestedAndActive(BladeRequest.RECALL),
-            blade -> {
-                if (blockDustPillarParticle != null) {
-                    blockDustPillarParticle.display(display.getLocation());
-                }
-                DisplayUtil.smoothTeleport(blade.getDisplay(), 10);
-                blade.getDisplay().teleport(
-                    blade.getDisplay().getLocation().subtract(
-                        blade.getDisplay().getLocation().getDirection().multiply(6)));
-            }
         ));
     }
 
@@ -479,7 +455,7 @@ public class UmbralBlade extends ThrownItem {
                 new Quaternionf()
             );
         }
-        else if (state == LodgedState.class || state == GroundedState.class) {
+        else if (state == LodgedState.class) {
             return display.getTransformation();
         }
         else if (state == AttackingQuickState.class || state == AttackingHeavyState.class) {
@@ -772,9 +748,19 @@ public class UmbralBlade extends ThrownItem {
     }
 
     @Override
+    protected void onGrounded() {
+        if (stuckBlock != null) {
+            this.blockDustPillarParticle = new ParticleWrapper(Particle.DUST_PILLAR, 50, 1, 1, 1, stuckBlock.getBlockData());
+            blockDustPillarParticle.display(cur);
+        }
+        request(BladeRequest.RECALL);
+    }
+
+    @Override
     protected void onEnd() {
         super.onEnd();
-        if (!grounded) finishedLunging = true;
+        finishedLunging = true;
+        cleanupBeforeNewThrow();
     }
 
     @Override
@@ -794,11 +780,10 @@ public class UmbralBlade extends ThrownItem {
     }
 
     public void cleanupBeforeNewThrow() {
-        t = 0;
         hit = false;
         grounded = false;
         caught = false;
-        hitEntity = null;
+//        hitEntity = null;
         stuckBlock = null;
     }
 }

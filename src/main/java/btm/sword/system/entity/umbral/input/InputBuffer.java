@@ -4,7 +4,7 @@ import java.util.ArrayDeque;
 import java.util.Deque;
 
 public class InputBuffer {
-    private static final long DEFAULT_TIMEOUT_MS = 100L; // 2 ticks before input is invalid; 1/10th of a second
+    private static final long DEFAULT_TIMEOUT_MS = 70L; // 2 ticks before input is invalid; 1/10th of a second
 
     private final Deque<TimestampedInput> queue = new ArrayDeque<>();
 

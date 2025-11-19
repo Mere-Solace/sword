@@ -244,6 +244,14 @@ public class ThrownItem {
             @Override
             public void run() {
                 if (grounded || hit || caught || display.isDead() || (timeCutoff > 0 && t * timeScalingFactor > timeCutoff)) {
+                    String reason = grounded ? "grounded" :
+                        hit ? "hit" :
+                            caught ? "caught" :
+                                display.isDead() ? "display dead" :
+                                    (timeCutoff > 0 && t > timeCutoff) ? "time cutoff" :
+                                        "unknown";
+                    thrower.message("Ending due to: " + reason);
+
                     onEnd();
                     cancel();
                     return;
@@ -399,6 +407,7 @@ public class ThrownItem {
         if (caught) onCatch();
         else if (hit) onHit();
         else if (grounded) onGrounded();
+        t = 0;
     }
 
     /**
@@ -406,7 +415,7 @@ public class ThrownItem {
      * <p>
      * Creates marker particles, positions the display, and schedules timed cleanup.
      */
-    public void onGrounded() {
+    protected void onGrounded() {
         if (stuckBlock != null) {
             this.blockDustPillarParticle = new ParticleWrapper(Particle.DUST_PILLAR, 50, 1, 1, 1, stuckBlock.getBlockData());
             blockDustPillarParticle.display(cur);
@@ -605,7 +614,7 @@ public class ThrownItem {
     public void groundedCheck() {
         RayTraceResult hitBlock = display.getWorld()
             .rayTraceBlocks(cur, velocity,
-                cur.toVector().subtract(prev.toVector()).lengthSquared()*0.6,
+                cur.toVector().subtract(prev.toVector()).lengthSquared()*0.2,
                 FluidCollisionMode.NEVER, true);
 
         if (hitBlock == null) {
