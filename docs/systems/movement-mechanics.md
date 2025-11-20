@@ -22,7 +22,7 @@ The dash ability is a directional teleport that moves the player rapidly in thei
 The dash executes through the following phases:
 
 #### Phase 1: Raytracing
-```
+```text
 1. Start from player eye location + initial_offset_y
 2. Trace along player facing direction
 3. Check for collisions every step_size blocks
@@ -39,7 +39,7 @@ The dash executes through the following phases:
 The dash applies velocity in two components:
 
 **Horizontal Velocity**:
-```
+```text
 velocity_horizontal = direction * distance * forward_multiplier * base_power
 ```
 
@@ -55,14 +55,14 @@ Where:
 - $p_b$ = Base power (`Config.Movement.DASH_BASE_POWER` = 0.7)
 
 **Example**:
-```
+```text
 For a 10-block dash:
 velocity_horizontal = direction * 10.0 * 0.5 * 0.7
                     = direction * 3.5 blocks/tick
 ```
 
 **Vertical Velocity**:
-```
+```text
 velocity_vertical = (distance * upward_multiplier + upward_boost) * base_power
 ```
 

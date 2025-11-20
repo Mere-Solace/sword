@@ -42,7 +42,8 @@
 12. Enter a terminal inside of your server's directory and do:
     1. `touch start.bash`
     2. Enter `start.bash` in a text editor, Vim is recommended but anything works.
-```
+
+```bash
 #!/bin/bash
 cp {paste-here} {path to your server directory}/plugins/sword.jar
 java -Xms4096M -Xmx4096M -jar paper-1.21.8-60.jar --nogui

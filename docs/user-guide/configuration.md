@@ -9,12 +9,14 @@ Sword: Combat Evolved uses a comprehensive configuration system that allows serv
 ### Configuration File Locations
 
 **Live Configuration (Edit This):**
-```
+
+```text
 plugins/Sword/config.yaml
 ```
 
 **Default Template (Don't Edit):**
-```
+
+```text
 src/main/resources/config.yaml (inside the plugin JAR)
 ```
 

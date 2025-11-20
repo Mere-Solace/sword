@@ -44,7 +44,7 @@ This directory contains Architecture Decision Records documenting significant te
 
 Each ADR follows this structure:
 
-```markdown
+```text
 # ADR XXX: Title
 
 **Status**: Proposed | Accepted | Deprecated | Superseded

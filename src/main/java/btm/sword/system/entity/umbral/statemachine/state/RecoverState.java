@@ -9,7 +9,6 @@ import btm.sword.system.entity.umbral.UmbralBlade;
 import btm.sword.system.entity.umbral.statemachine.UmbralStateFacade;
 
 public class RecoverState extends UmbralStateFacade {
-    private boolean recoveringBlade;
     private UmbralBlade blade;
     private final Runnable recoverBlade = new BukkitRunnable() {
         @Override
@@ -18,7 +17,6 @@ public class RecoverState extends UmbralStateFacade {
                 if (blade.getDisplay() != null) blade.getDisplay().remove();
                 blade.setDisplay(null);
                 blade.resetWeaponDisplay();
-                recoveringBlade = false;
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }
@@ -34,7 +32,6 @@ public class RecoverState extends UmbralStateFacade {
     @Override
     public void onEnter(UmbralBlade blade) {
         this.blade = blade;
-        recoveringBlade = true;
         recoverTask = Bukkit.getScheduler().runTaskTimer(
             Sword.getInstance(), recoverBlade, 0, 4L);
     }

@@ -20,6 +20,7 @@ public class ItemDisplayAttack extends Attack {
     private final boolean displayOnly;
 
     private final int displaySteps;
+    @SuppressWarnings("unused") // Calculated for symmetry; used in overloaded constructor
     private final int attackStepsPerDisplayStep; // number display steps gets multiplied by
     private final int tpDuration;
 
@@ -35,7 +36,7 @@ public class ItemDisplayAttack extends Attack {
         this.weaponDisplay = weaponDisplay;
         this.displayOnly = displayOnly;
         this.displaySteps = 10; //TODO config pls
-        this.attackStepsPerDisplayStep = attackIterations / displaySteps;
+        this.attackStepsPerDisplayStep = attackIterations / displaySteps; // Stored for potential future use
         this.tpDuration = tpDuration;
     }
 
