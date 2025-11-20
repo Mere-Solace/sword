@@ -272,7 +272,10 @@ public class Attack extends SwordAction implements Runnable {
 
                 if (!currentTarget.entity().isDead()) {
                     currentTarget.hit(attacker,
-                            5, 1, 15, 6,
+                        Config.Combat.ATTACK_CLASS_HIT_INVULN_TICKS,
+                        Config.Combat.ATTACK_CLASS_HIT_SHARDS,
+                        Config.Combat.ATTACK_CLASS_HIT_TOUGHNESS,
+                        Config.Combat.ATTACK_CLASS_HIT_SOULFIRE,
                             attackType.knockbackFunction().apply(this));
 
                     Prefab.Particles.TEST_HIT.display(currentTarget.getChestLocation());

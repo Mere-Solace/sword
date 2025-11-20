@@ -414,6 +414,20 @@ public class Config {
      * @see btm.sword.system.action.AttackAction Attack state machine
      */
     public static class Combat {
+        public static double SHARDS_LOST_PERCENT_TOUGHNESS_RESET = 0.75; // HP (1 heart = 2 HP)
+        static { register("combat.shards_lost_percent_toughness_reset",
+            SHARDS_LOST_PERCENT_TOUGHNESS_RESET, Double.class,
+            v -> SHARDS_LOST_PERCENT_TOUGHNESS_RESET = v,
+            ConfigurationSection::getDouble
+        ); }
+
+        public static float TOUGHNESS_RECHARGE_PERCENT = 0.75f; // HP (1 heart = 2 HP)
+        static { register("combat.toughness_recharge_percent",
+            TOUGHNESS_RECHARGE_PERCENT, Float.class,
+            v -> TOUGHNESS_RECHARGE_PERCENT = v,
+            Config::loadFloat
+        ); }
+
         // Attacks configuration
         public static double ATTACKS_BASE_DAMAGE = 20.0; // HP (1 heart = 2 HP)
         static { register("combat.attacks_base_damage",
@@ -753,7 +767,7 @@ public class Config {
                 ConfigurationSection::getInt
         ); }
 
-        public static int ATTACK_CLASS_TIMING_ATTACK_ITERATIONS = 5;
+        public static int ATTACK_CLASS_TIMING_ATTACK_ITERATIONS = 50;
         static { register(
                 "combat.attack_class_timing_attack_iterations",
                 ATTACK_CLASS_TIMING_ATTACK_ITERATIONS, Integer.class,
@@ -778,12 +792,44 @@ public class Config {
         ); }
 
         // Attack class modifiers configuration
-        public static double ATTACK_CLASS_MODIFIERS_RANGE_MULTIPLIER = 2.0;
+        public static double ATTACK_CLASS_MODIFIERS_RANGE_MULTIPLIER = 1.0;
         static { register(
                 "combat.attack_class_modifiers_range_multiplier",
                 ATTACK_CLASS_MODIFIERS_RANGE_MULTIPLIER, Double.class,
                 v -> ATTACK_CLASS_MODIFIERS_RANGE_MULTIPLIER = v,
                 ConfigurationSection::getDouble
+        ); }
+
+        public static int ATTACK_CLASS_HIT_INVULN_TICKS = 5;
+        static { register(
+            "combat.attack_class_hit_invuln_ticks",
+            ATTACK_CLASS_HIT_INVULN_TICKS, Integer.class,
+            v -> ATTACK_CLASS_HIT_INVULN_TICKS = v,
+            ConfigurationSection::getInt
+        ); }
+
+        public static int ATTACK_CLASS_HIT_SHARDS = 1;
+        static { register(
+            "combat.attack_class_hit_shards",
+            ATTACK_CLASS_HIT_SHARDS, Integer.class,
+            v -> ATTACK_CLASS_HIT_SHARDS = v,
+            ConfigurationSection::getInt
+        ); }
+
+        public static float ATTACK_CLASS_HIT_TOUGHNESS = 15;
+        static { register(
+            "combat.attack_class_hit_toughness",
+            ATTACK_CLASS_HIT_TOUGHNESS, Float.class,
+            v -> ATTACK_CLASS_HIT_TOUGHNESS = v,
+            Config::loadFloat
+        ); }
+
+        public static float ATTACK_CLASS_HIT_SOULFIRE = 6;
+        static { register(
+            "combat.attack_class_hit_toughness",
+            ATTACK_CLASS_HIT_SOULFIRE, Float.class,
+            v -> ATTACK_CLASS_HIT_SOULFIRE = v,
+            Config::loadFloat
         ); }
     }
     //endregion
@@ -1149,6 +1195,22 @@ public class Config {
             v -> ATTACK_PITCH = v,
             Config::loadFloat
         ); }
+
+        public static float ENTITY_HIT_CONNECT_VOLUME = 0.9f;
+        static { register(
+            "audio.entity_hit_connect",
+            ENTITY_HIT_CONNECT_VOLUME, Float.class,
+            v -> ENTITY_HIT_CONNECT_VOLUME = v,
+            Config::loadFloat
+        ); }
+
+        public static float ENTITY_HIT_CONNECT_PITCH = 1.0f;
+        static { register(
+            "audio.entity_hit_connect",
+            ENTITY_HIT_CONNECT_PITCH, Float.class,
+            v -> ENTITY_HIT_CONNECT_PITCH = v,
+            Config::loadFloat
+        ); }
     }
     //endregion
 
@@ -1184,7 +1246,7 @@ public class Config {
             ConfigurationSection::getDouble
         ); }
 
-        public static double PLAYER_BASE_TOUGHNESS = 20.0; // HP
+        public static double PLAYER_BASE_TOUGHNESS = 100.0; // HP
         static { register(
             "entity.player_base_toughness",
             PLAYER_BASE_TOUGHNESS, Double.class,
@@ -1227,7 +1289,7 @@ public class Config {
         ); }
 
         // Combat profile shards configuration
-        public static float COMBAT_PROFILE_SHARDS_CURRENT = 10.0f;
+        public static float COMBAT_PROFILE_SHARDS_CURRENT = 6.0f;
         static { register(
             "entity.combat_profile_shards_current",
             COMBAT_PROFILE_SHARDS_CURRENT, Float.class,
@@ -1235,7 +1297,7 @@ public class Config {
             Config::loadFloat
         ); }
 
-        public static int COMBAT_PROFILE_SHARDS_REGEN_PERIOD = 50;
+        public static int COMBAT_PROFILE_SHARDS_REGEN_PERIOD = 100; //
         static { register(
             "entity.combat_profile_shards_regen_period",
             COMBAT_PROFILE_SHARDS_REGEN_PERIOD, Integer.class,
@@ -1252,7 +1314,7 @@ public class Config {
         ); }
 
         // Combat profile toughness configuration
-        public static float COMBAT_PROFILE_TOUGHNESS_CURRENT = 20.0f;
+        public static float COMBAT_PROFILE_TOUGHNESS_CURRENT = 100.0f;
         static { register(
             "entity.combat_profile_toughness_current",
             COMBAT_PROFILE_TOUGHNESS_CURRENT, Float.class,

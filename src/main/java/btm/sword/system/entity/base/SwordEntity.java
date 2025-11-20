@@ -7,6 +7,7 @@ import java.util.UUID;
 
 import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.ArmorStand;
 import org.bukkit.entity.Display;
 import org.bukkit.entity.Entity;
@@ -408,7 +409,13 @@ public abstract class SwordEntity {
      * @param knockbackVelocity velocity vector to apply knockback
      * @param afflictions optional afflictions to apply from the hit
      */
-    public void hit(Combatant source, long hitInvulnerableTickDuration, int baseNumShards, float baseToughnessDamage, float baseSoulfireReduction, Vector knockbackVelocity, Affliction... afflictions) {
+    public void hit(Combatant source,
+                    long hitInvulnerableTickDuration,
+                    int baseNumShards,
+                    float baseToughnessDamage,
+                    float baseSoulfireReduction,
+                    Vector knockbackVelocity,
+                    Affliction... afflictions) {
         if (hit)
             return;
         else
@@ -418,7 +425,8 @@ public abstract class SwordEntity {
         self.damage(0.01);
 
         Prefab.Particles.TEST_HIT.display(getChestLocation());
-        SoundUtil.playSound(source.entity(), SoundType.ENTITY_PLAYER_ATTACK_STRONG, 0.9f, 1f);
+        SoundUtil.playSound(source.entity(), SoundType.ENTITY_PLAYER_ATTACK_STRONG,
+            Config.Audio.ENTITY_HIT_CONNECT_VOLUME, Config.Audio.ENTITY_HIT_CONNECT_PITCH);
 
         if (aspects.toughness().remove(baseToughnessDamage)) {
             if (!toughnessBroken) {
@@ -441,8 +449,8 @@ public abstract class SwordEntity {
             }
             shardsLost += baseNumShards;
 
-            if (shardsLost >= 0.75 * aspects.shards().effectiveValue()) {
-                aspects.toughness().setCurPercent(0.9f);
+            if (shardsLost >= Config.Combat.SHARDS_LOST_PERCENT_TOUGHNESS_RESET * aspects.shards().effectiveValue()) {
+                aspects.toughness().setCurPercent(Config.Combat.TOUGHNESS_RECHARGE_PERCENT);
             }
         }
 
@@ -460,7 +468,7 @@ public abstract class SwordEntity {
      * Intended to be overridden in subclasses.
      */
     public void displayShardLoss() {
-
+        // TODO: later
     }
 
     /**
