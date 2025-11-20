@@ -20,6 +20,7 @@ import org.bukkit.util.RayTraceResult;
 import org.bukkit.util.Vector;
 
 import btm.sword.Sword;
+import btm.sword.config.Config;
 import btm.sword.system.action.utility.thrown.InteractiveItemArbiter;
 import btm.sword.system.entity.SwordEntityArbiter;
 import btm.sword.system.entity.aspect.AspectType;
@@ -103,7 +104,7 @@ public class MovementAction extends SwordAction {
                         executor.setVelocity(ex.getEyeLocation().getDirection().multiply(Math.log(length)));
 
                         Vector u = executor.getFlatDir().multiply(forward ? btm.sword.config.Config.Movement.DASH_FORWARD_MULTIPLIER : -btm.sword.config.Config.Movement.DASH_FORWARD_MULTIPLIER)
-                                .add(Prefab.Direction.UP().multiply(btm.sword.config.Config.Movement.DASH_UPWARD_MULTIPLIER));
+                                .add(Config.Direction.UP().multiply(btm.sword.config.Config.Movement.DASH_UPWARD_MULTIPLIER));
 
                         new BukkitRunnable() {
                             @Override
@@ -139,7 +140,7 @@ public class MovementAction extends SwordAction {
 
                 double dashPower = btm.sword.config.Config.Movement.DASH_BASE_POWER;
                 double s = forward ? dashPower : -dashPower;
-                Vector up = Prefab.Direction.UP().multiply(btm.sword.config.Config.Movement.DASH_UPWARD_BOOST);
+                Vector up = Config.Direction.UP().multiply(btm.sword.config.Config.Movement.DASH_UPWARD_BOOST);
                 new BukkitRunnable() {
                     int i = 0;
                     @Override

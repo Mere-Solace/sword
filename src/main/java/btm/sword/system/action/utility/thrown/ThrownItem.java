@@ -336,15 +336,15 @@ public class ThrownItem {
         Vector flatDir = thrower.getFlatDir().rotateAroundY(Config.Physics.THROWN_ITEMS_TRAJECTORY_ROTATION);
         velocity = flatDir.clone();
         Vector forwardVelocity = flatDir.clone().multiply(forwardCoefficient);
-        Vector upwardVelocity = Prefab.Direction.UP().multiply(upwardCoefficient);
+        Vector upwardVelocity = Config.Direction.UP().multiply(upwardCoefficient);
 
         double gravDamper = Config.Physics.THROWN_ITEMS_GRAVITY_DAMPER;
 
         positionFunction = t -> flatDir.clone().multiply(forwardCoefficient * t)
-            .add(Prefab.Direction.UP().multiply((upwardCoefficient * t) - (initialVelocity * (1 / gravDamper) * t * t)));
+            .add(Config.Direction.UP().multiply((upwardCoefficient * t) - (initialVelocity * (1 / gravDamper) * t * t)));
 
         velocityFunction = t -> forwardVelocity.clone()
-            .add(upwardVelocity.clone().add(Prefab.Direction.UP().multiply(-initialVelocity * (2 / (gravDamper)) * t)));
+            .add(upwardVelocity.clone().add(Config.Direction.UP().multiply(-initialVelocity * (2 / (gravDamper)) * t)));
     }
 
     /**
@@ -503,7 +503,7 @@ public class ThrownItem {
     private void startImpalementTask(SwordEntity target) {
         Vector kb = EntityUtil.isOnGround(target.entity()) ?
             velocity.clone().multiply(Config.Combat.THROWN_DAMAGE_SWORD_AXE_KNOCKBACK_GROUNDED) :
-            VectorUtil.getProjOntoPlane(velocity, Prefab.Direction.UP()).multiply(Config.Combat.THROWN_DAMAGE_SWORD_AXE_KNOCKBACK_AIRBORNE);
+            VectorUtil.getProjOntoPlane(velocity, Config.Direction.UP()).multiply(Config.Combat.THROWN_DAMAGE_SWORD_AXE_KNOCKBACK_AIRBORNE);
 
         impale(target.entity());
         target.hit(thrower,

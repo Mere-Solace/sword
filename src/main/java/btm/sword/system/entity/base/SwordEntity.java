@@ -27,6 +27,7 @@ import org.joml.Vector3f;
 import com.destroystokyo.paper.event.entity.EntityRemoveFromWorldEvent;
 
 import btm.sword.Sword;
+import btm.sword.config.Config;
 import btm.sword.system.combat.Affliction;
 import btm.sword.system.entity.SwordEntityArbiter;
 import btm.sword.system.entity.aspect.AspectType;
@@ -231,7 +232,7 @@ public abstract class SwordEntity {
         if (!(entity() instanceof LivingEntity living) || living instanceof ArmorStand) return;
         if (entity().getType() == EntityType.ITEM_DISPLAY || entity().getType() == EntityType.ITEM) return;
 
-        statusDisplay = (TextDisplay) entity().getWorld().spawnEntity(entity().getEyeLocation().setDirection(Prefab.Direction.NORTH()), EntityType.TEXT_DISPLAY);
+        statusDisplay = (TextDisplay) entity().getWorld().spawnEntity(entity().getEyeLocation().setDirection(Config.Direction.NORTH()), EntityType.TEXT_DISPLAY);
         statusDisplay.addScoreboardTag("remove_on_shutdown");
         statusDisplay.setNoPhysics(true);
         statusDisplay.setBillboard(Display.Billboard.CENTER);

@@ -5,6 +5,7 @@ import java.util.function.Function;
 
 import org.bukkit.util.Vector;
 
+import btm.sword.config.Config;
 import btm.sword.util.Prefab;
 
 public enum AttackType {
@@ -63,7 +64,7 @@ public enum AttackType {
         new Vector(-0.4,0.67,-0.9),
         new Vector(0.56,-0.89,2.1),
         new Vector(-0.4,1.37,1.65)),
-        attack -> Prefab.Direction.UP().multiply(5)
+        attack -> Config.Direction.UP().multiply(5)
     ),
 
     LUNGE1(List.of(
@@ -102,10 +103,10 @@ public enum AttackType {
     )),
 
     DEFAULT(List.of(
-        Prefab.Direction.UP(),
-        Prefab.Direction.DOWN(),
-        Prefab.Direction.OUT_UP(),
-        Prefab.Direction.OUT_DOWN()
+        Config.Direction.UP(),
+        Config.Direction.DOWN(),
+        Config.Direction.OUT_UP(),
+        Config.Direction.OUT_DOWN()
     ));
 
     private final List<Vector> controlVectors;

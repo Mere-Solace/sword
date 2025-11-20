@@ -177,18 +177,6 @@ public final class ConfigManager {
     }
 
     /**
-     * Gets the raw Bukkit FileConfiguration object.
-     * <p>
-     * For advanced use cases. Prefer using static Config class when possible.
-     * </p>
-     *
-     * @return The underlying FileConfiguration
-     */
-    public FileConfiguration getRawConfig() {
-        return config;
-    }
-
-    /**
      * Resets configuration to default values.
      * <p>
      * Backs up existing config and replaces with default from resources.
@@ -214,14 +202,5 @@ public final class ConfigManager {
             plugin.getLogger().log(Level.SEVERE, "Failed to reset configuration", e);
             return false;
         }
-    }
-
-    /**
-     * Gets the plugin instance.
-     *
-     * @return The Sword plugin instance
-     */
-    public Sword getPlugin() {
-        return plugin;
     }
 }

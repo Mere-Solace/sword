@@ -7,7 +7,8 @@ import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.util.Vector;
 
-import btm.sword.util.Prefab;
+import btm.sword.config.Config;
+
 
 /**
  * Utility class providing mathematical operations and geometric transformations for {@link Vector}s.
@@ -21,9 +22,9 @@ public class VectorUtil {
         dir.normalize();
         if (dir.isZero()) // just in case, return a default basis
             return new Basis(
-                Prefab.Direction.UP().crossProduct(Prefab.Direction.SOUTH()),
-                Prefab.Direction.UP(),
-                Prefab.Direction.SOUTH());
+                Config.Direction.UP().crossProduct(Config.Direction.SOUTH()),
+                Config.Direction.UP(),
+                Config.Direction.SOUTH());
 
         Vector ref = new Vector(0,1,0);
         Vector right = null;
@@ -45,7 +46,7 @@ public class VectorUtil {
     }
 
     public static Basis getBasisWithoutPitch(Entity origin) {
-        Vector up = Prefab.Direction.UP();
+        Vector up = Config.Direction.UP();
         double yaw;
         if (origin instanceof Player player) {
             yaw = Math.toRadians(player.getBodyYaw());
@@ -60,7 +61,7 @@ public class VectorUtil {
     }
 
     public static Basis getBasisWithoutPitch(Location location) {
-        Vector up = Prefab.Direction.UP();
+        Vector up = Config.Direction.UP();
         double yaw = Math.toRadians(location.getYaw());
         Vector dir = new Vector(-Math.sin(yaw), 0, Math.cos(yaw));
         Vector right = dir.getCrossProduct(up).normalize();

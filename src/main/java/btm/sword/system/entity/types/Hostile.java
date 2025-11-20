@@ -17,10 +17,10 @@ import org.bukkit.scheduler.BukkitTask;
 import com.destroystokyo.paper.entity.Pathfinder;
 
 import btm.sword.Sword;
+import btm.sword.config.Config;
 import btm.sword.system.action.utility.GrabAction;
 import btm.sword.system.entity.base.CombatProfile;
 import btm.sword.system.entity.base.SwordEntity;
-import btm.sword.util.Prefab;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -136,7 +136,7 @@ public class Hostile extends Combatant {
             @Override
             public void run() {
                 if (i >= 1) cancel();
-                mob.setVelocity(Prefab.Direction.UP().multiply(1));
+                mob.setVelocity(Config.Direction.UP().multiply(1));
                 i++;
             }
         }.runTaskTimer(Sword.getInstance(), 0L, 1L);
