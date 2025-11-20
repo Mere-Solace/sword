@@ -1,9 +1,9 @@
 package btm.sword.config;
 
+import org.bukkit.util.Vector;
+
 import lombok.Getter;
 import lombok.Setter;
-
-import org.bukkit.util.Vector;
 
 // New Config Setup; Think it'll be a lot nicer than the old, class based one where I wasn't even able to peek the numbers.
 @Getter
@@ -31,7 +31,6 @@ public class Config {
         public static Vector OUT_UP() { return OUT_UP.clone(); }
 
         private static final Vector OUT_DOWN = new Vector(0, -1, 1);
-
         public static Vector OUT_DOWN() { return OUT_DOWN.clone(); }
     }
 }
