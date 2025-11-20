@@ -42,25 +42,72 @@ The dash applies velocity in two components:
 ```
 velocity_horizontal = direction * distance * forward_multiplier * base_power
 ```
+
+**Mathematical Formula**:
+
+$\vec{v}_h = \hat{d} \cdot s \cdot m_f \cdot p_b$
+
 Where:
-- `direction` = player facing direction (normalized)
-- `distance` = actual dash distance (blocks)
-- `forward_multiplier` = `Config.Movement.DASH_FORWARD_MULTIPLIER` (0.5)
-- `base_power` = `Config.Movement.DASH_BASE_POWER` (0.7)
+- $\vec{v}_h$ = Horizontal velocity vector (blocks/tick)
+- $\hat{d}$ = Player facing direction (normalized unit vector)
+- $s$ = Actual dash distance (blocks)
+- $m_f$ = Forward multiplier (`Config.Movement.DASH_FORWARD_MULTIPLIER` = 0.5)
+- $p_b$ = Base power (`Config.Movement.DASH_BASE_POWER` = 0.7)
+
+**Example**:
+```
+For a 10-block dash:
+velocity_horizontal = direction * 10.0 * 0.5 * 0.7
+                    = direction * 3.5 blocks/tick
+```
 
 **Vertical Velocity**:
 ```
 velocity_vertical = (distance * upward_multiplier + upward_boost) * base_power
 ```
+
+**Mathematical Formula**:
+
+$v_v = (s \cdot m_u + b_u) \cdot p_b$
+
 Where:
-- `upward_multiplier` = `Config.Movement.DASH_UPWARD_MULTIPLIER` (0.15)
-- `upward_boost` = `Config.Movement.DASH_UPWARD_BOOST` (0.05)
+- $v_v$ = Vertical velocity component (blocks/tick)
+- $s$ = Actual dash distance (blocks)
+- $m_u$ = Upward multiplier (`Config.Movement.DASH_UPWARD_MULTIPLIER` = 0.15)
+- $b_u$ = Upward boost (`Config.Movement.DASH_UPWARD_BOOST` = 0.05)
+- $p_b$ = Base power (`Config.Movement.DASH_BASE_POWER` = 0.7)
+
+**Example**:
+```
+For a 10-block dash:
+velocity_vertical = (10.0 * 0.15 + 0.05) * 0.7
+                  = (1.5 + 0.05) * 0.7
+                  = 1.085 blocks/tick
+```
 
 **Velocity Damping** (applied per tick):
 ```
 velocity *= damping_factor
 ```
-Where `damping_factor` = `Config.Movement.DASH_VELOCITY_DAMPING` (0.6)
+
+**Mathematical Formula**:
+
+$\vec{v}_{t+1} = \vec{v}_t \cdot d$
+
+Where:
+- $\vec{v}_{t+1}$ = Velocity at next tick
+- $\vec{v}_t$ = Current velocity
+- $d$ = Damping factor (`Config.Movement.DASH_VELOCITY_DAMPING` = 0.6)
+
+**Example** (velocity decay over 5 ticks):
+```
+Initial: v = 3.5 blocks/tick
+Tick 1:  v = 3.5 * 0.6 = 2.1 blocks/tick
+Tick 2:  v = 2.1 * 0.6 = 1.26 blocks/tick
+Tick 3:  v = 1.26 * 0.6 = 0.756 blocks/tick
+Tick 4:  v = 0.756 * 0.6 = 0.454 blocks/tick
+Tick 5:  v = 0.454 * 0.6 = 0.272 blocks/tick
+```
 
 #### Phase 3: Grab Detection
 
@@ -69,6 +116,21 @@ After dash execution, the system checks for grabbable entities:
 ```
 grab_radius = sqrt(DASH_GRAB_DISTANCE_SQUARED)
               = sqrt(8.5) ≈ 2.9 blocks
+```
+
+**Mathematical Formula**:
+
+$r_{grab} = \sqrt{d^2_{grab}}$
+
+Where:
+
+- $r_{grab}$ = Grab detection radius (blocks)
+- $d^2_{grab}$ = `Config.Movement.DASH_GRAB_DISTANCE_SQUARED` = 8.5 blocks²
+
+**Example**:
+```
+grab_radius = √8.5
+           ≈ 2.915 blocks
 ```
 
 Entities within this radius are pulled toward the player using the grab mechanic.
@@ -122,6 +184,22 @@ For i = 0 to iterations:
     position.y += velocity_y
 ```
 
+**Mathematical Formula**:
+
+$y_{final} = y_{initial} + n \cdot v_y$
+
+Where:
+
+- $y_{final}$ = Final Y position after upward phase
+- $y_{initial}$ = Starting Y position
+- $n$ = Number of iterations (`Config.Movement.TOSS_UPWARD_PHASE_ITERATIONS` = 2)
+- $v_y$ = Upward velocity (`Config.Movement.TOSS_UPWARD_VELOCITY_Y` = 0.25 blocks/tick)
+
+**Example**:
+```
+Total upward displacement = 2 * 0.25 = 0.5 blocks
+```
+
 **Purpose**: Creates initial upward arc for visual appeal and clearance.
 
 #### Phase 2: Forward Projectile
@@ -133,6 +211,27 @@ might_multiplier = TOSS_MIGHT_MULTIPLIER_BASE + (might_level * INCREMENT)
 
 velocity = player_facing * base_force * might_multiplier
 ```
+
+**Mathematical Formula**:
+
+$\vec{v}_{toss} = \hat{d}_{player} \cdot F_{base} \cdot M_{might}$
+
+Where:
+
+- $\vec{v}_{toss}$ = Toss velocity vector (blocks/tick)
+- $\hat{d}_{player}$ = Player facing direction (normalized)
+- $F_{base}$ = Base force (`Config.Movement.TOSS_BASE_FORCE` = 1.5 blocks/tick)
+- $M_{might}$ = Might multiplier
+
+**Might Multiplier Formula**:
+
+$M_{might} = M_{base} + (L_{might} \cdot I_{increment})$
+
+Where:
+
+- $M_{base}$ = Base multiplier (`Config.Movement.TOSS_MIGHT_MULTIPLIER_BASE` = 2.5)
+- $L_{might}$ = Might enchantment level (0-10)
+- $I_{increment}$ = Increment per level (`Config.Movement.TOSS_MIGHT_MULTIPLIER_INCREMENT` = 0.1)
 
 **Might Scaling**:
 | Might Level | Multiplier | Effective Force |
@@ -148,6 +247,25 @@ The toss damage is **velocity-based**:
 ```
 damage = BASE_THROWN_DAMAGE + (item_velocity_magnitude * ITEM_VELOCITY_MULTIPLIER)
        = 12.0 HP + (velocity * 1.5)
+```
+
+**Mathematical Formula**:
+
+$D_{toss} = D_{base} + (|\vec{v}_{item}| \cdot M_{velocity})$
+
+Where:
+
+- $D_{toss}$ = Total toss damage (HP)
+- $D_{base}$ = Base thrown damage (`Config.Combat.BASE_THROWN_DAMAGE` = 12.0 HP)
+- $|\vec{v}_{item}|$ = Item velocity magnitude (blocks/tick)
+- $M_{velocity}$ = Velocity multiplier (`Config.Combat.ITEM_VELOCITY_MULTIPLIER` = 1.5)
+
+**Example** (Might level 5):
+```
+velocity_magnitude = 3.0 * 4.5 = 13.5 blocks/tick (from might scaling)
+damage = 12.0 + (13.5 * 1.5)
+       = 12.0 + 20.25
+       = 32.25 HP
 ```
 
 **Additional Damage Factors**:
@@ -170,6 +288,16 @@ break_blocks = Config.World.EXPLOSIONS_BREAK_BLOCKS (false)
 ```
 knockback = explosion_direction * TOSS_KNOCKBACK_MULTIPLIER (0.3)
 ```
+
+**Mathematical Formula**:
+
+$\vec{K}_{toss} = \hat{d}_{explosion} \cdot M_{knockback}$
+
+Where:
+
+- $\vec{K}_{toss}$ = Knockback vector (blocks/tick)
+- $\hat{d}_{explosion}$ = Direction from explosion center to target (normalized)
+- $M_{knockback}$ = Knockback multiplier (`Config.Movement.TOSS_KNOCKBACK_MULTIPLIER` = 0.3)
 
 ### Animation
 
@@ -216,6 +344,26 @@ pull_force = pull_direction * GRAB_PULL_STRENGTH
            = pull_direction * 0.8 blocks/tick
 
 entity_velocity += pull_force
+```
+
+**Mathematical Formula**:
+
+$\vec{F}_{pull} = \frac{\vec{P}_{player} - \vec{P}_{entity}}{|\vec{P}_{player} - \vec{P}_{entity}|} \cdot S_{pull}$
+
+$\vec{v}_{entity} \mathrel{+}= \vec{F}_{pull}$
+
+Where:
+
+- $\vec{F}_{pull}$ = Pull force vector (blocks/tick)
+- $\vec{P}_{player}$ = Player position
+- $\vec{P}_{entity}$ = Entity position
+- $S_{pull}$ = Pull strength (`Config.Movement.GRAB_PULL_STRENGTH` = 0.8 blocks/tick)
+- $\vec{v}_{entity}$ = Entity velocity (updated each tick)
+
+**Example** (entity 3 blocks away):
+```
+pull_direction = (0, 0, -3) / 3 = (0, 0, -1) [normalized]
+pull_force = (0, 0, -1) * 0.8 = (0, 0, -0.8) blocks/tick
 ```
 
 Applied every tick for `Config.Movement.GRAB_HOLD_DURATION` (40 ticks = 2 seconds).
