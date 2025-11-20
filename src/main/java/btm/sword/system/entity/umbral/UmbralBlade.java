@@ -22,7 +22,7 @@ import org.joml.Quaternionf;
 import org.joml.Vector3f;
 
 import btm.sword.Sword;
-import btm.sword.config.ConfigManager;
+import btm.sword.config.Config;
 import btm.sword.system.SwordScheduler;
 import btm.sword.system.action.utility.thrown.InteractiveItemArbiter;
 import btm.sword.system.action.utility.thrown.ThrownItem;
@@ -402,7 +402,7 @@ public class UmbralBlade extends ThrownItem {
 
     public void onTick() {
         if (thrower.isInvalid()) {
-            thrower.message("Ending Umbral Blade");
+//            thrower.message("Ending Umbral Blade");
             dispose();
         }
 
@@ -564,7 +564,7 @@ public class UmbralBlade extends ThrownItem {
             attackOrigin = target.getChestLocation().clone()
                 .subtract(to).setDirection(to.normalize());
 
-            thrower.message("Targeted this guy: " + target.getDisplayName());
+//            thrower.message("Targeted this guy: " + target.getDisplayName());
         }
 
         attack = heavy ? heavyAttacks[0].apply(thrower) : basicAttacks[0].apply(thrower); // TODO dynamic.
@@ -728,9 +728,8 @@ public class UmbralBlade extends ThrownItem {
 
         double heightOffset = Math.max(0, Math.min(cur.getY() - feet, hit.getHeight()));
 
-        var impalementConfig = ConfigManager.getInstance().getCombat().getImpalement();
-        boolean followHead = !impalementConfig.getHeadFollowExceptions().contains(hitEntity.entity().getType())
-            && heightOffset >= diff * impalementConfig.getHeadZoneRatio();
+        boolean followHead = !Config.Combat.IMPALEMENT_HEAD_FOLLOW_EXCEPTIONS.contains(hitEntity.entity().getType())
+            && heightOffset >= diff * Config.Combat.IMPALEMENT_HEAD_ZONE_RATIO;
         DisplayUtil.itemDisplayFollow(hitEntity, display,  velocity.clone().normalize(), heightOffset, followHead,
             blade -> !inState(LodgedState.class), this, null, null);
     }

@@ -20,8 +20,6 @@ import org.bukkit.util.RayTraceResult;
 import org.bukkit.util.Vector;
 
 import btm.sword.Sword;
-import btm.sword.config.ConfigManager;
-import btm.sword.config.section.MovementConfig;
 import btm.sword.system.action.utility.thrown.InteractiveItemArbiter;
 import btm.sword.system.entity.SwordEntityArbiter;
 import btm.sword.system.entity.aspect.AspectType;
@@ -53,14 +51,13 @@ public class MovementAction extends SwordAction {
      * @param forward  True for forward dash, false for backward dash.
      */ // TODO: This method is illegible...
     public static void dash(Combatant executor, boolean forward) {
-        MovementConfig cfg = ConfigManager.getInstance().getMovement();
-        double maxDistance = cfg.getDashMaxDistance();
+        double maxDistance = btm.sword.config.Config.Movement.DASH_MAX_DISTANCE;
 
-        cast (executor, cfg.getDashCastDuration(), new BukkitRunnable() {
+        cast (executor, btm.sword.config.Config.Movement.DASH_CAST_DURATION, new BukkitRunnable() {
             @Override
             public void run() {
                 LivingEntity ex = executor.entity();
-                final Location dashStartLocation = ex.getLocation().add(new Vector(0, cfg.getDashInitialOffsetY(), 0));
+                final Location dashStartLocation = ex.getLocation().add(new Vector(0, btm.sword.config.Config.Movement.DASH_INITIAL_OFFSET_Y, 0));
                 boolean onGround = executor.isGrounded();
                 Location o = ex.getEyeLocation();
 
@@ -68,7 +65,7 @@ public class MovementAction extends SwordAction {
                 ex.addPotionEffect(speed);
 
                 // check for an item that may be the target of the dash
-                Entity targetedItem = HitboxUtil.ray(o, o.getDirection(), maxDistance, cfg.getDashRayHitboxRadius(),
+                Entity targetedItem = HitboxUtil.ray(o, o.getDirection(), maxDistance, btm.sword.config.Config.Movement.DASH_RAY_HITBOX_RADIUS,
                         entity -> (entity.getType() == EntityType.ITEM_DISPLAY &&
                                 !entity.isDead() &&
                                 entity instanceof ItemDisplay id &&
@@ -80,7 +77,7 @@ public class MovementAction extends SwordAction {
                         !id.isDead() &&
                         !id.getItemStack().isEmpty()) {
                     RayTraceResult impedanceCheck = ex.getWorld().rayTraceBlocks(
-                            ex.getLocation().add(new Vector(0, cfg.getDashImpedanceCheckOffsetY(), 0)),
+                            ex.getLocation().add(new Vector(0, btm.sword.config.Config.Movement.DASH_IMPEDANCE_CHECK_OFFSET_Y, 0)),
                             targetedItem.getLocation().subtract(ex.getLocation()).toVector().normalize(),
                             maxDistance/2, FluidCollisionMode.NEVER,
                             true,
@@ -90,11 +87,11 @@ public class MovementAction extends SwordAction {
                         int t = 0;
                         @Override
                         public void run() {
-                            DrawUtil.secant(List.of(Prefab.Particles.TEST_SWORD_BLUE), dashStartLocation, ex.getLocation(), cfg.getDashSecantRadius());
-                            t += cfg.getDashParticleTimerIncrement();
-                            if (t > cfg.getDashParticleTimerThreshold()) cancel();
+                            DrawUtil.secant(List.of(Prefab.Particles.TEST_SWORD_BLUE), dashStartLocation, ex.getLocation(), btm.sword.config.Config.Movement.DASH_SECANT_RADIUS);
+                            t += btm.sword.config.Config.Movement.DASH_PARTICLE_TIMER_INCREMENT;
+                            if (t > btm.sword.config.Config.Movement.DASH_PARTICLE_TIMER_THRESHOLD) cancel();
                         }
-                    }.runTaskTimer(Sword.getInstance(), cfg.getDashParticleTaskDelay(), cfg.getDashParticleTaskPeriod());
+                    }.runTaskTimer(Sword.getInstance(), btm.sword.config.Config.Movement.DASH_PARTICLE_TASK_DELAY, btm.sword.config.Config.Movement.DASH_PARTICLE_TASK_PERIOD);
 
 
 //					if (impedanceCheck != null)
@@ -105,34 +102,34 @@ public class MovementAction extends SwordAction {
 
                         executor.setVelocity(ex.getEyeLocation().getDirection().multiply(Math.log(length)));
 
-                        Vector u = executor.getFlatDir().multiply(forward ? cfg.getDashForwardMultiplier() : -cfg.getDashForwardMultiplier())
-                                .add(Prefab.Direction.UP().multiply(cfg.getDashUpwardMultiplier()));
+                        Vector u = executor.getFlatDir().multiply(forward ? btm.sword.config.Config.Movement.DASH_FORWARD_MULTIPLIER : -btm.sword.config.Config.Movement.DASH_FORWARD_MULTIPLIER)
+                                .add(Prefab.Direction.UP().multiply(btm.sword.config.Config.Movement.DASH_UPWARD_MULTIPLIER));
 
                         new BukkitRunnable() {
                             @Override
                             public void run() {
-                                if (id.getLocation().subtract(ex.getEyeLocation()).lengthSquared() < cfg.getDashGrabDistanceSquared()) {
-                                    BlockData blockData = ex.getLocation().add(new Vector(0, cfg.getDashBlockCheckOffsetY(), 0)).getBlock().getBlockData();
+                                if (id.getLocation().subtract(ex.getEyeLocation()).lengthSquared() < btm.sword.config.Config.Movement.DASH_GRAB_DISTANCE_SQUARED) {
+                                    BlockData blockData = ex.getLocation().add(new Vector(0, btm.sword.config.Config.Movement.DASH_BLOCK_CHECK_OFFSET_Y, 0)).getBlock().getBlockData();
                                     new ParticleWrapper(Particle.DUST_PILLAR,
-                                            cfg.getDashParticleCount(),
-                                            cfg.getDashParticleSpreadX(),
-                                            cfg.getDashParticleSpreadY(),
-                                            cfg.getDashParticleSpreadZ(),
+                                            btm.sword.config.Config.Movement.DASH_PARTICLE_COUNT,
+                                            btm.sword.config.Config.Movement.DASH_PARTICLE_SPREAD_X,
+                                            btm.sword.config.Config.Movement.DASH_PARTICLE_SPREAD_Y,
+                                            btm.sword.config.Config.Movement.DASH_PARTICLE_SPREAD_Z,
                                             blockData).display(ex.getLocation());
-                                    SoundUtil.playSound(ex, SoundType.ENTITY_ENDER_DRAGON_FLAP, cfg.getDashFlapSoundVolume(), cfg.getDashFlapSoundPitch());
-                                    SoundUtil.playSound(ex, SoundType.ENTITY_PLAYER_ATTACK_SWEEP, cfg.getDashSweepSoundVolume(), cfg.getDashSweepSoundPitch());
+                                    SoundUtil.playSound(ex, SoundType.ENTITY_ENDER_DRAGON_FLAP, btm.sword.config.Config.Movement.DASH_FLAP_SOUND_VOLUME, btm.sword.config.Config.Movement.DASH_FLAP_SOUND_PITCH);
+                                    SoundUtil.playSound(ex, SoundType.ENTITY_PLAYER_ATTACK_SWEEP, btm.sword.config.Config.Movement.DASH_SWEEP_SOUND_VOLUME, btm.sword.config.Config.Movement.DASH_SWEEP_SOUND_PITCH);
                                     executor.setVelocity(u);
 
                                     InteractiveItemArbiter.onGrab(id, executor); // here is where the display is taken care of
                                 }
                                 else {
                                     Vector v = ex.getVelocity();
-                                    double damping = cfg.getDashVelocityDamping();
+                                    double damping = btm.sword.config.Config.Movement.DASH_VELOCITY_DAMPING;
                                     ex.setVelocity(new Vector(v.getX() * damping, v.getY() * damping, v.getZ() * damping));
                                     executor.message("Didn't get there");
                                 }
                             }
-                        }.runTaskLater(Sword.getInstance(), cfg.getDashGrabCheckDelay());
+                        }.runTaskLater(Sword.getInstance(), btm.sword.config.Config.Movement.DASH_GRAB_CHECK_DELAY);
                         return;
                     }
                     else {
@@ -140,9 +137,9 @@ public class MovementAction extends SwordAction {
                     }
                 }
 
-                double dashPower = cfg.getDashBasePower();
+                double dashPower = btm.sword.config.Config.Movement.DASH_BASE_POWER;
                 double s = forward ? dashPower : -dashPower;
-                Vector up = Prefab.Direction.UP().multiply(cfg.getDashUpwardBoost());
+                Vector up = Prefab.Direction.UP().multiply(btm.sword.config.Config.Movement.DASH_UPWARD_BOOST);
                 new BukkitRunnable() {
                     int i = 0;
                     @Override
@@ -164,7 +161,7 @@ public class MovementAction extends SwordAction {
                         }
                         i++;
                     }
-                }.runTaskTimer(Sword.getInstance(), cfg.getDashVelocityTaskDelay(), cfg.getDashVelocityTaskPeriod());
+                }.runTaskTimer(Sword.getInstance(), btm.sword.config.Config.Movement.DASH_VELOCITY_TASK_DELAY, btm.sword.config.Config.Movement.DASH_VELOCITY_TASK_PERIOD);
                 if (!onGround)
                     executor.increaseAirDashesPerformed();
             }
@@ -182,33 +179,32 @@ public class MovementAction extends SwordAction {
      * @param target   The sword entity to toss.
      */
     public static void toss(Combatant executor, SwordEntity target) {
-        MovementConfig cfg = ConfigManager.getInstance().getMovement();
         LivingEntity ex = executor.entity();
         LivingEntity t = target.entity();
 
-        double baseForce = cfg.getTossBaseForce();
-        double force = executor.calcValueAdditive(AspectType.MIGHT, cfg.getTossMightMultiplierBase(), baseForce, cfg.getTossMightMultiplierIncrement());
+        double baseForce = btm.sword.config.Config.Movement.TOSS_BASE_FORCE;
+        double force = executor.calcValueAdditive(AspectType.MIGHT, btm.sword.config.Config.Movement.TOSS_MIGHT_MULTIPLIER_BASE, baseForce, btm.sword.config.Config.Movement.TOSS_MIGHT_MULTIPLIER_INCREMENT);
 
-        for (int i = 0; i < cfg.getTossUpwardPhaseIterations(); i++) {
+        for (int i = 0; i < btm.sword.config.Config.Movement.TOSS_UPWARD_PHASE_ITERATIONS; i++) {
             new BukkitRunnable() {
                 @Override
                 public void run() {
-                    t.setVelocity(new Vector(0, cfg.getTossUpwardVelocityY(), 0));
+                    t.setVelocity(new Vector(0, btm.sword.config.Config.Movement.TOSS_UPWARD_VELOCITY_Y, 0));
                 }
             }.runTaskLater(Sword.getInstance(), i);
         }
 
-        for (int i = 0; i < cfg.getTossForwardPhaseIterations(); i++) {
+        for (int i = 0; i < btm.sword.config.Config.Movement.TOSS_FORWARD_PHASE_ITERATIONS; i++) {
             new BukkitRunnable() {
                 @Override
                 public void run() {
                     t.setVelocity(ex.getEyeLocation().getDirection().multiply(force));
                 }
-            }.runTaskLater(Sword.getInstance(), i + cfg.getTossUpwardPhaseIterations());
+            }.runTaskLater(Sword.getInstance(), i + btm.sword.config.Config.Movement.TOSS_UPWARD_PHASE_ITERATIONS);
         }
 
         boolean[] check = {true};
-        for (int i = 0; i < cfg.getTossAnimationIterations(); i++) {
+        for (int i = 0; i < btm.sword.config.Config.Movement.TOSS_ANIMATION_ITERATIONS; i++) {
             new BukkitRunnable() {
                 @Override
                 public void run() {
@@ -220,17 +216,17 @@ public class MovementAction extends SwordAction {
                     Location base = t.getLocation();
                     double h = t.getEyeHeight();
                     Vector v = t.getVelocity().normalize();
-                    Location l = base.add(new Vector(0, h * cfg.getTossLocationOffsetMultiplier(), 0).add(v));
+                    Location l = base.add(new Vector(0, h * btm.sword.config.Config.Movement.TOSS_LOCATION_OFFSET_MULTIPLIER, 0).add(v));
 
-                    Prefab.Particles.THROW_TRAIl.display(base.add(new Vector(0, h * cfg.getTossParticleHeightMultiplier(), 0)));
+                    Prefab.Particles.THROW_TRAIl.display(base.add(new Vector(0, h * btm.sword.config.Config.Movement.TOSS_PARTICLE_HEIGHT_MULTIPLIER, 0)));
 
                     if (l.isFinite()) {
                         RayTraceResult blockResult = world.rayTraceBlocks(l, v,
-                                h * cfg.getTossRayTraceDistanceMultiplier(), FluidCollisionMode.NEVER,
+                                h * btm.sword.config.Config.Movement.TOSS_RAY_TRACE_DISTANCE_MULTIPLIER, FluidCollisionMode.NEVER,
                                 true,
                                 block -> !block.getType().isCollidable());
 
-                        double entityRadius = cfg.getTossEntityDetectionRadius();
+                        double entityRadius = btm.sword.config.Config.Movement.TOSS_ENTITY_DETECTION_RADIUS;
                         Collection<LivingEntity> entities = world.getNearbyLivingEntities(
                                 l, entityRadius, entityRadius, entityRadius,
                                 entity -> !entity.getUniqueId().equals(t.getUniqueId()) && !entity.getUniqueId().equals(ex.getUniqueId()));
@@ -238,14 +234,14 @@ public class MovementAction extends SwordAction {
                         if ((blockResult != null && blockResult.getHitBlock() != null) || !entities.isEmpty()) {
                             if (!entities.isEmpty()) {
                                 Vector knockbackDir = base.toVector().subtract(((LivingEntity) Arrays.stream(entities.toArray()).toList().getFirst()).getLocation().toVector());
-                                t.setVelocity(knockbackDir.normalize().multiply(cfg.getTossKnockbackMultiplier() * force));
+                                t.setVelocity(knockbackDir.normalize().multiply(btm.sword.config.Config.Movement.TOSS_KNOCKBACK_MULTIPLIER * force));
                             }
-                            world.createExplosion(l, cfg.getTossExplosionPower(), false, false);
+                            world.createExplosion(l, btm.sword.config.Config.Movement.TOSS_EXPLOSION_POWER, false, false);
                             target.hit(executor,
-                                    cfg.getTossHitInvulnerabilityTicks(),
-                                    cfg.getTossHitShardDamage(),
-                                    cfg.getTossHitToughnessDamage(),
-                                    cfg.getTossHitSoulfireReduction(),
+                                    btm.sword.config.Config.Movement.TOSS_HIT_INVULNERABILITY_TICKS,
+                                    btm.sword.config.Config.Movement.TOSS_HIT_SHARD_DAMAGE,
+                                    btm.sword.config.Config.Movement.TOSS_HIT_TOUGHNESS_DAMAGE,
+                                    btm.sword.config.Config.Movement.TOSS_HIT_SOULFIRE_REDUCTION,
                                     new Vector());
                             check[0] = false;
                         }

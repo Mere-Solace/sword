@@ -13,7 +13,7 @@ import org.bukkit.entity.EntityType;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.util.Vector;
 
-import btm.sword.config.section.AudioConfig;
+import btm.sword.config.Config;
 import btm.sword.system.attack.Attack;
 import btm.sword.util.display.ParticleWrapper;
 import btm.sword.util.sound.SoundWrapper;
@@ -125,7 +125,11 @@ public class Prefab {
          * Properties configured in config.yaml under audio.attack.
          * </p>
          */
-        public static final SoundWrapper ATTACK = new SoundWrapper(AudioConfig::getAttackSound);
+        public static final SoundWrapper ATTACK = new SoundWrapper(
+            () -> Config.Audio.ATTACK_SOUND,
+            () -> Config.Audio.ATTACK_VOLUME,
+            () -> Config.Audio.ATTACK_PITCH
+        );
 
         /**
          * Throw sound effect for thrown items.
@@ -134,6 +138,10 @@ public class Prefab {
          * Properties configured in config.yaml under audio.throw.
          * </p>
          */
-        public static final SoundWrapper THROW = new SoundWrapper(AudioConfig::getThrowSound);
+        public static final SoundWrapper THROW = new SoundWrapper(
+            () -> Config.Audio.THROW_SOUND,
+            () -> Config.Audio.THROW_VOLUME,
+            () -> Config.Audio.THROW_PITCH
+        );
     }
 }

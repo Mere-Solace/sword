@@ -162,27 +162,31 @@ private void setupConfig() {
        new_parameter: 42.0  # Add new value
    ```
 
-2. **Update config class**:
+2. **Update Config class**:
    ```java
-   // In MovementConfig.java
-   @Getter
-   public class MovementConfig {
-       private final double newParameter;
-
-       public MovementConfig(FileConfiguration config) {
-           ConfigurationSection dash = movement.getConfigurationSection("dash");
-           this.newParameter = dash.getDouble("new_parameter", 42.0);
-       }
+   // In Config.java - Add field and setter (use ALL_CAPS naming)
+   public static class Movement {
+       public static double DASH_NEW_PARAMETER = 42.0;
+       static void setDASH_NEW_PARAMETER(double value) { DASH_NEW_PARAMETER = value; }
    }
    ```
 
-3. **Build and test**:
+3. **Update ConfigManager loading**:
+
+   ```java
+   // In ConfigManager.java - Load the value into static field
+   Config.Movement.setDASH_NEW_PARAMETER(
+       get("movement.dash.new_parameter", 42.0)
+   );
+   ```
+
+4. **Build and test**:
    ```bash
    ./gradlew build
    ./gradlew runServer
    ```
 
-4. **Verification**:
+5. **Verification**:
    - On first server start, `run/plugins/Sword/config.yaml` is created with your new value
    - Edit `run/plugins/Sword/config.yaml` to test different values
    - Use `/sword reload` to hot-reload changes
@@ -279,11 +283,13 @@ public boolean reload() {
 ```
 
 **What Gets Reloaded**:
-- All `ConfigSection` objects are recreated with new values from disk
+
+- All static `Config.*` fields are updated with new values from disk
 - Changes take effect immediately (no server restart required)
 - Active gameplay (entities, ongoing actions) uses new values on next execution
 
 **What Does NOT Get Reloaded**:
+
 - Already-spawned entities keep their old stat values (until respawned)
 - Scheduled tasks continue with old parameters (until next execution)
 
@@ -367,6 +373,8 @@ config.yaml
 ## References
 
 - [ConfigManager.java](../../src/main/java/btm/sword/config/ConfigManager.java) - Configuration loading system
+- [Config.java](../../src/main/java/btm/sword/config/Config.java) - Static configuration class
 - [build.gradle](../../build.gradle) - Gradle build configuration
-- [Hybrid Configuration Pattern ADR](../decisions/003-hybrid-configuration-pattern.md) - Development methodology
+- [ADR 005: Static Configuration Class](../decisions/005-static-configuration-class.md) - Current architecture
+- [ADR 003: Hybrid Configuration Pattern](../decisions/003-hybrid-configuration-pattern-DEPRECATED.md) - Previous approach (superseded)
 - [Configuration Guide](../user-guide/configuration.md) - User documentation for server admins

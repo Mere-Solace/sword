@@ -6,7 +6,6 @@ import org.apache.logging.log4j.util.TriConsumer;
 import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
 
-import btm.sword.config.ConfigManager;
 import btm.sword.system.attack.Attack;
 import btm.sword.system.attack.AttackType;
 import btm.sword.system.entity.types.Combatant;
@@ -65,7 +64,7 @@ public class AttackAction extends SwordAction {
             ((SwordPlayer) executor).resetTree(); // can't combo aerials
 
             AttackType attackType = AttackType.N_AIR;
-            double downAirThreshold = ConfigManager.getInstance().getCombat().getAttacks().getDownAirThreshold();
+            double downAirThreshold = btm.sword.config.Config.Combat.ATTACKS_DOWN_AIR_THRESHOLD;
             if (dot < downAirThreshold) attackType = AttackType.D_AIR;
 
             for (var entry : attackMap.entrySet()) {
