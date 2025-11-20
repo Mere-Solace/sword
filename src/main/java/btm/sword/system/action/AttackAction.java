@@ -43,7 +43,7 @@ public class AttackAction extends SwordAction {
         ItemStack itemStack = executor.getItemStackInHand(true);
         Material itemType = itemStack.getType();
 
-        // TODO: todo link from the umbral Blade todo in input execution tree.
+        // TODO: #122 - Link from the umbral Blade todo in input execution tree
         // handle potential umbral blade usage
         if (KeyRegistry.hasKey(itemStack, KeyRegistry.SOUL_LINK_KEY) &&
                 executor.getUmbralBlade() != null) {

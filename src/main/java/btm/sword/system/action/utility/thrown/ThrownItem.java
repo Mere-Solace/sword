@@ -265,8 +265,8 @@ public class ThrownItem {
                 teleport();
                 rotate();
 
-                Prefab.Particles.THROW_TRAIl.display(cur); // TODO: make type of particles dynamic
-                if (blockTrail != null && timeStep % 3 == 0) // TODO: and make period dynamic
+                Prefab.Particles.THROW_TRAIl.display(cur); // TODO: #119 - Make type of particles dynamic
+                if (blockTrail != null && timeStep % 3 == 0) // TODO: #119 - Make period dynamic
                     blockTrail.display(cur);
 
                 evaluate();
@@ -358,7 +358,7 @@ public class ThrownItem {
         Quaternionf newRotation;
         String name = display.getItemStack().getType().toString();
 
-        // TODO: make more extensible somehow?
+        // TODO: #127 - Make more extensible somehow?
         if (name.endsWith("_SWORD")) {
             newRotation = curRotation.rotateZ((float) Config.Physics.THROWN_ITEMS_ROTATION_SPEED_SWORD);
         }
@@ -472,7 +472,7 @@ public class ThrownItem {
     public void onHit() {
         if (hitEntity == null) return;
 
-        // TODO: Better checks for weapon, can tag with impactType = 'impale'
+        // TODO: #127 - Better checks for weapon, can tag with impactType = 'impale'
         String name = display.getItemStack().getType().toString();
 
         if (name.endsWith("_SWORD") || name.endsWith("AXE")) {

@@ -50,7 +50,7 @@ public class MovementAction extends SwordAction {
      *
      * @param executor The combatant performing the dash.
      * @param forward  True for forward dash, false for backward dash.
-     */ // TODO: This method is illegible...
+     */ // TODO: #125 - This method is illegible, needs refactoring for readability
     public static void dash(Combatant executor, boolean forward) {
         double maxDistance = btm.sword.config.Config.Movement.DASH_MAX_DISTANCE;
 

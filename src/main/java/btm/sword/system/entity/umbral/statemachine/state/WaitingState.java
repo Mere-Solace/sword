@@ -50,8 +50,6 @@ public class WaitingState extends UmbralStateFacade {
     public void onExit(UmbralBlade blade) {
         blade.endIdleMovement();
         blade.unregisterAsInteractableItem();
-        // TODO: Unregister from InteractiveItemArbiter when leaving this state,
-        // TODO: issues #103 & #99
     }
 
     @Override

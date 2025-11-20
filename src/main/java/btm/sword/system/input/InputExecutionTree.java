@@ -323,10 +323,10 @@ public class InputExecutionTree {
 
         // Item dependent actions:
 
-        // TODO: define possible better way of differentiating between normal attacks and umbral attacks
+        // TODO: #122 - Define possible better way of differentiating between normal attacks and umbral attacks
         // my main concern with this was not being able to dynamically change cooldowns if umbral blade or normal blade was used
         // those were erroneous since my cooldown calc is a Function! I love Functional Interfaces!
-        // TODO: make inputExecution tree timeout value dynamic for usage in longer cooldown input chains
+        // TODO: #123 - Make inputExecution tree timeout value dynamic for usage in longer cooldown input chains
 
         // basic attacks
         add(List.of(InputType.LEFT),

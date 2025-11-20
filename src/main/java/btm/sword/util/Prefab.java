@@ -74,7 +74,7 @@ public class Prefab {
          * </p>
          * 2nd in list: self/entity to be excluded
          */
-        public static final Predicate<List<Entity>> DEFAULT_HITBOX_FILTER = // TODO: Make more of these and use them.
+        public static final Predicate<List<Entity>> DEFAULT_HITBOX_FILTER = // TODO: #125 - Make more of these and use them
             checkAndSelf ->
                 checkAndSelf.size() == 2 &&
                 (checkAndSelf.getFirst() instanceof LivingEntity target) &&

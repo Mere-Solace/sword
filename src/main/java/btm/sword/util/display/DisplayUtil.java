@@ -1,6 +1,5 @@
 package btm.sword.util.display;
 
-import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
@@ -132,8 +131,6 @@ public class DisplayUtil {
                 }
 
                 if (condition != null && toTest != null && condition.test(toTest)) {
-                    // TODO: remove
-                    Objects.requireNonNull(Bukkit.getPlayer("BladeSworn")).sendMessage("Condition satisfied, no longer in Lodged state");
                     if (callback != null && toConsume != null) callback.accept(toConsume);
                     cancel();
                 }

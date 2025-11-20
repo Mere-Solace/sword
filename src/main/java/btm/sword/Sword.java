@@ -62,7 +62,7 @@ public final class Sword extends JavaPlugin {
         // Clean up all active thrown item displays
         InteractiveItemArbiter.cleanupAll();
 
-        // TODO: Uncomment when persistent data is ready
+        // TODO: #129 - Uncomment when persistent data is ready
         // PlayerDataManager.shutdown();
 
         getLogger().info("~ Sword: Combat Evolved has been disabled ~");

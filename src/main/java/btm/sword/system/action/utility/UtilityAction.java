@@ -22,8 +22,7 @@ public class UtilityAction extends SwordAction {
             @Override
             public void run() {
                 // some cool particle effects or smth
-                // TODO: Initially just stop all movement and then let everything go slowly
-                // TODO: #84 - somehow keep track of all vectors and slow them... This will require great organization and refactoring
+                // TODO: #84 - Implement slow-motion effect (track all vectors and slow them)
                 List<PotionEffect> chillOut = List.of(
                     new PotionEffect(PotionEffectType.SLOWNESS, 200, 3), // 10 seconds = 200 ticks
                     new PotionEffect(PotionEffectType.SLOW_FALLING, 200, 3));

@@ -10,7 +10,7 @@ import btm.sword.system.entity.umbral.UmbralBlade;
 import btm.sword.system.entity.umbral.input.BladeRequest;
 import btm.sword.system.entity.umbral.statemachine.UmbralStateFacade;
 
-// TODO: while recalling or returning, allow for dashing to the blade.
+// TODO: #122 - While recalling or returning, allow for dashing to the blade
 public class ReturningState extends UmbralStateFacade {
     private Location previousBladeLocation;
     private int t = 0;

@@ -113,7 +113,7 @@ public class InteractiveItemArbiter {
      * Disposes of all registered thrown items and clears the registry.
      */
     public static void cleanupAll() {
-        // TODO: Issue #81 considerations
+        // TODO: #81 - Cleanup considerations for thrown items
         for (ThrownItem thrownItem : thrownItems.values()) {
             thrownItem.dispose();
         }

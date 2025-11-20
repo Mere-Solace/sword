@@ -295,7 +295,7 @@ public class UmbralBlade extends ThrownItem {
             blade -> isRequestedAndActive(BladeRequest.STANDBY),
             blade -> {}
         ));
-        // TODO: may time out sometimes upon returning to the player. Make a check for this and a time-out feature.
+        // TODO: #122 - May time out sometimes upon returning to the player. Make a check for this and a time-out feature
         bladeStateMachine.addTransition(new Transition<>(
             ReturningState.class,
             StandbyState.class,
@@ -306,7 +306,7 @@ public class UmbralBlade extends ThrownItem {
         bladeStateMachine.addTransition(new Transition<>(
             ReturningState.class,
             LungingState.class,
-            blade -> isRequestedAndActive(BladeRequest.LUNGE), // TODO: test this
+            blade -> isRequestedAndActive(BladeRequest.LUNGE), // TODO: #122 - Test this transition
             blade -> {}
         ));
 
@@ -410,15 +410,15 @@ public class UmbralBlade extends ThrownItem {
             bladeStateMachine.tick();
     }
 
-    // TODO: make a method for calculating correct orientation of blade for edge to align with plane of swing on attack
-    // TODO: Make transitions smooth af and slow with arcs and such and interpolation
+    // TODO: #121 - Make a method for calculating correct orientation of blade for edge to align with plane of swing on attack
+    // TODO: #121 - Make transitions smooth af and slow with arcs and such and interpolation
     public void setDisplayTransformation(Class<? extends State<UmbralBlade>> state) {
         if (display == null) return;
 
         new BukkitRunnable() {
             @Override
             public void run() {
-                DisplayUtil.setInterpolationValues(display, 0, 2); // TODO: make duration dynamic
+                DisplayUtil.setInterpolationValues(display, 0, 2); // TODO: #119 - Make duration dynamic
                 display.setTransformation(getStateDisplayTransformation(state));
             }
         }.runTaskLater(Sword.getInstance(), 1L);
@@ -532,7 +532,7 @@ public class UmbralBlade extends ThrownItem {
         }
     }
 
-    // TODO: Make item Display changes look less jerky
+    // TODO: #121 - Make item Display changes look less jerky
 
     public BukkitTask returnToWielderAndRequestState(BladeRequest request) {
         return DisplayUtil.displaySlerpToOffset(thrower, display,
@@ -584,7 +584,7 @@ public class UmbralBlade extends ThrownItem {
     private void loadBasicAttacks() {
         // load from config or registry later
         basicAttacks = new Function[]{
-            // TODO: fix how display step and attack steps work, confusing and incorrect rn
+            // TODO: #120 - Fix how display step and attack steps work, confusing and incorrect rn
             combatant -> new UmbralBladeAttack(display, AttackType.WIDE_UMBRAL_SLASH1_WINDUP,
                 true, true, 1,
                 10, 30, 500,
@@ -706,7 +706,7 @@ public class UmbralBlade extends ThrownItem {
 
     public void onGrab(Combatant combatant) {
         if (combatant.getUniqueId() != thrower.getUniqueId()) {
-            // TODO: rejection logic or smth
+            // TODO: #122 - Add rejection logic for non-thrower grabs
             return;
         }
 

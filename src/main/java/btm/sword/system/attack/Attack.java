@@ -189,7 +189,7 @@ public class Attack extends SwordAction implements Runnable {
         calcTickValues();
 
         curIteration = 0;
-        for (int i = 0; i <= attackIterations; i++) { // TODO: research a better way than scheduling all at once with delays...
+        for (int i = 0; i <= attackIterations; i++) { // TODO: #120 - Research a better way than scheduling all at once with delays
             final int idx = i;
             SwordScheduler.runBukkitTaskLater(
                 new BukkitRunnable() {
@@ -251,7 +251,7 @@ public class Attack extends SwordAction implements Runnable {
         }
     }
 
-    // TODO: Make Particle Effects more dynamic. Low prio.
+    // TODO: #128 - Make Particle Effects more dynamic. Low prio.
     protected void drawAttackEffects() {
         Prefab.Particles.TEST_SWING.display(attackLocation);
     }
