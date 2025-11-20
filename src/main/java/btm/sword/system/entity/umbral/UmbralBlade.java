@@ -5,8 +5,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
-import btm.sword.util.display.ParticleWrapper;
-
 import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -58,6 +56,7 @@ import btm.sword.system.statemachine.Transition;
 import btm.sword.util.Prefab;
 import btm.sword.util.display.DisplayUtil;
 import btm.sword.util.display.DrawUtil;
+import btm.sword.util.display.ParticleWrapper;
 import btm.sword.util.math.BezierUtil;
 import btm.sword.util.math.VectorUtil;
 import lombok.Getter;

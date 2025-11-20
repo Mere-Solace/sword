@@ -1,6 +1,5 @@
 package btm.sword.system.entity.umbral.statemachine.state;
 
-import btm.sword.system.entity.umbral.input.BladeRequest;
 
 import org.bukkit.Color;
 
