@@ -121,7 +121,6 @@ public class InputListener implements Listener {
      */
     @EventHandler
     public void onPlayerEntityInteract(PlayerInteractEntityEvent event) {
-        Sword.print("Interacted with entity");
         SwordPlayer swordPlayer = (SwordPlayer) SwordEntityArbiter.getOrAdd(event.getPlayer().getUniqueId());
         if (swordPlayer == null) return;
         ItemStack item = swordPlayer.getItemStackInHand(true);

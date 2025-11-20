@@ -1,5 +1,6 @@
 package btm.sword.system.entity;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Objects;
 import java.util.UUID;
@@ -141,6 +142,10 @@ public class SwordEntityArbiter {
                 return new Passive(entity, new CombatProfile());
             }
         }
+    }
+
+    public static Collection<SwordEntity> convertAllToSwordEntities(Collection<LivingEntity> entities) {
+        return entities.stream().map(entity -> getOrAdd(entity.getUniqueId())).toList();
     }
 
     public static void removeAllDisplays() {

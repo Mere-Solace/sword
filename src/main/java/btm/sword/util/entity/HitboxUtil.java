@@ -144,7 +144,6 @@ public class HitboxUtil {
         return hit;
     }
 
-
     public static HashSet<LivingEntity> secant(Location origin, Location end, double thickness, Predicate<Entity> filter) {
         HashSet<LivingEntity> hit = new HashSet<>();
 

@@ -388,6 +388,7 @@ public class InputExecutionTree {
                 true,
                 600L);
 
+        // just in case
         add(List.of(InputType.DROP, InputType.DROP),
                 new InputAction(
                         UtilityAction::death,
@@ -398,6 +399,18 @@ public class InputExecutionTree {
                 true,
                 true,
                 true);
+
+        add(List.of(InputType.RIGHT, InputType.RIGHT_HOLD, InputType.DROP),
+            new InputAction(
+                UtilityAction::bulletTime,
+                executor -> 5000L,
+                Combatant::canPerformAction,
+                true,
+                true),
+            true,
+            true,
+            true,
+            500L);
 
         // umbral blade
         // toggling of umbral blade can only occur if holding an item (since it begins with drop)

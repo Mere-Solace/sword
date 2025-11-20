@@ -78,6 +78,7 @@ public class Prefab {
         public static Vector OUT_UP() { return OUT_UP.clone(); }
 
         private static final Vector OUT_DOWN = new Vector(0, -1, 1);
+
         public static Vector OUT_DOWN() { return OUT_DOWN.clone(); }
     }
 

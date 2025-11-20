@@ -70,12 +70,11 @@ public class ThrownItem {
 
     protected double timeScalingFactor = -1;
     protected double timeCutoff = -1;
+    protected int timeStep = 0;
 
     protected Basis currentBasis;
 
     protected double initialVelocity;
-
-    protected int t = 0;
 
     protected Function<Double, Vector> positionFunction;
     protected Function<Double, Vector> velocityFunction;
@@ -243,12 +242,12 @@ public class ThrownItem {
         new BukkitRunnable() {
             @Override
             public void run() {
-                if (grounded || hit || caught || display.isDead() || (timeCutoff > 0 && t * timeScalingFactor > timeCutoff)) {
+                if (grounded || hit || caught || display.isDead() || (timeCutoff > 0 && timeStep * timeScalingFactor > timeCutoff)) {
                     String reason = grounded ? "grounded" :
                         hit ? "hit" :
                             caught ? "caught" :
                                 display.isDead() ? "display dead" :
-                                    (timeCutoff > 0 && t > timeCutoff) ? "time cutoff" :
+                                    (timeCutoff > 0 && timeStep > timeCutoff) ? "time cutoff" :
                                         "unknown";
                     thrower.message("Ending due to: " + reason);
 
@@ -267,12 +266,12 @@ public class ThrownItem {
                 rotate();
 
                 Prefab.Particles.THROW_TRAIl.display(cur); // TODO: make type of particles dynamic
-                if (blockTrail != null && t % 3 == 0) // TODO: and make period dynamic
+                if (blockTrail != null && timeStep % 3 == 0) // TODO: and make period dynamic
                     blockTrail.display(cur);
 
                 evaluate();
                 prev = cur.clone();
-                t++; // Step time value forward for next iteration
+                timeStep++; // Step time value forward for next iteration
             }
         }.runTaskTimer(Sword.getInstance(), 0L, 1L);
     }
@@ -290,10 +289,10 @@ public class ThrownItem {
     protected void applyFunctions() {
         double time;
         if (timeScalingFactor < 0) {
-            time = t;
+            time = timeStep;
         }
         else {
-            time = t * timeScalingFactor;
+            time = timeStep * timeScalingFactor;
         }
         cur = origin.clone().add(positionFunction.apply(time));
         velocity = velocityFunction.apply(time);
@@ -407,7 +406,7 @@ public class ThrownItem {
         if (caught) onCatch();
         else if (hit) onHit();
         else if (grounded) onGrounded();
-        t = 0;
+        timeStep = 0;
     }
 
     /**
@@ -668,7 +667,7 @@ public class ThrownItem {
                         l.getType() != EntityType.ARMOR_STAND;
         // Throwing a weapon should not immediately result in catching it, therefore a grace period is in place.
         int gracePeriod = ConfigManager.getInstance().getTiming().getThrownItems().getCatchGracePeriod();
-        return t < gracePeriod ? entity -> filter.test(entity) && entity.getUniqueId() != thrower.getUniqueId() : filter;
+        return timeStep < gracePeriod ? entity -> filter.test(entity) && entity.getUniqueId() != thrower.getUniqueId() : filter;
     }
 
     /**
