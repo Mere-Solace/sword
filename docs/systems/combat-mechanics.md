@@ -19,7 +19,7 @@ This document explains the combat systems in Sword: Combat Evolved, including da
 
 All attacks start with a base damage value:
 
-```
+```java
 base_damage = Config.Combat.ATTACKS_BASE_DAMAGE  // 20.0 HP (10 hearts)
 ```
 
@@ -34,7 +34,7 @@ This is modified by:
 
 Different attack types apply damage multipliers:
 
-```
+```java
 final_damage = base_damage * attack_type_multiplier * range_multiplier
 ```
 
@@ -43,6 +43,7 @@ final_damage = base_damage * attack_type_multiplier * range_multiplier
 $$D_{final} = D_{base} \times M_{type} \times M_{range}$$
 
 Where:
+
 - $D_{final}$ = Final damage dealt
 - $D_{base}$ = Base damage (20.0 HP)
 - $M_{type}$ = Attack type multiplier
@@ -66,7 +67,7 @@ Attacks have range-based damage scaling:
 
 Thrown items use a **velocity-based damage model**:
 
-```
+```text
 thrown_damage = (
     base_thrown_damage +
     (item_velocity * velocity_multiplier) *
@@ -84,6 +85,7 @@ Where:
 $$D_{thrown} = D_{base} + (|\vec{v}| \times M_{velocity}) \times M_{sword}$$
 
 Where:
+
 - $D_{thrown}$ = Total thrown damage
 - $D_{base}$ = Base thrown damage (12.0 HP)
 - $|\vec{v}|$ = Velocity magnitude (blocks/tick)
@@ -92,7 +94,7 @@ Where:
 
 **Example Calculation**:
 
-```
+```text
 velocity = 3.0 blocks/tick
 thrown_damage = 12.0 + (3.0 * 1.5) * 1.0
               = 12.0 + 4.5
@@ -109,7 +111,7 @@ The combat system uses a **custom armor model** with three layers:
 
 #### 1. Shards (First Layer)
 
-```
+```text
 shards_damage = attack_shards_cost
 remaining_shards -= shards_damage
 
@@ -124,6 +126,7 @@ $$S_{remaining} = \max(0, S_{current} - C_{shards})$$
 $$D_{overflow} = \max(0, C_{shards} - S_{current})$$
 
 Where:
+
 - $S_{remaining}$ = Shards remaining after attack
 - $S_{current}$ = Current shard count
 - $C_{shards}$ = Shard cost of attack
@@ -137,7 +140,7 @@ Default shard cost:
 
 #### 2. Toughness (Second Layer)
 
-```
+```text
 toughness_damage = attack_toughness_damage
 remaining_toughness -= toughness_damage
 
@@ -152,6 +155,7 @@ $$T_{remaining} = \max(0, T_{current} - D_{toughness})$$
 $$D_{overflow} = \max(0, D_{toughness} - T_{current})$$
 
 Where:
+
 - $T_{remaining}$ = Toughness remaining after attack
 - $T_{current}$ = Current toughness value
 - $D_{toughness}$ = Toughness damage from attack
@@ -165,7 +169,7 @@ Toughness damage by attack type:
 
 #### 3. Health (Final Layer)
 
-```
+```text
 health_damage = final_attack_damage - (shards_absorbed + toughness_absorbed)
 remaining_health -= health_damage
 ```
@@ -177,6 +181,7 @@ $$H_{remaining} = H_{current} - D_{health}$$
 $$D_{health} = D_{final} - (A_{shards} + A_{toughness})$$
 
 Where:
+
 - $H_{remaining}$ = Health remaining after attack
 - $H_{current}$ = Current health value
 - $D_{health}$ = Damage applied to health
@@ -188,7 +193,7 @@ Where:
 
 All attacks reduce the target's soulfire resource:
 
-```
+```text
 soulfire -= soulfire_reduction_cost
 ```
 
@@ -206,7 +211,7 @@ Soulfire costs by attack type:
 
 The combat system uses **oriented bounding boxes (OBBs)** for hit detection:
 
-```
+```text
 hitbox = OrientedBoundingBox(
     center = attacker_eye_location + (facing_direction * reach / 2),
     dimensions = (reach, width, height),
@@ -221,6 +226,7 @@ $$\vec{C}_{hitbox} = \vec{P}_{eye} + \hat{d} \cdot \frac{r}{2}$$
 $$V_{hitbox} = r \times w \times h$$
 
 Where:
+
 - $\vec{C}_{hitbox}$ = Center position of hitbox
 - $\vec{P}_{eye}$ = Attacker's eye location
 - $\hat{d}$ = Normalized facing direction vector
@@ -235,7 +241,7 @@ Different attacks use different hitbox sizes:
 
 #### Basic Attack Hitbox
 
-```
+```text
 reach = Config.Combat.HITBOXES_BASIC_REACH  // 1.5 blocks
 width = Config.Combat.HITBOXES_BASIC_WIDTH  // 1.5 blocks
 height = Config.Combat.HITBOXES_BASIC_HEIGHT  // 1.5 blocks
@@ -245,7 +251,7 @@ Volume = 1.5 × 1.5 × 1.5 = 3.375 cubic blocks
 
 #### Down Air Attack Hitbox
 
-```
+```text
 reach = Config.Combat.HITBOXES_DOWN_AIR_REACH  // 1.6 blocks
 width = Config.Combat.HITBOXES_DOWN_AIR_WIDTH  // 1.4 blocks
 height = Config.Combat.HITBOXES_DOWN_AIR_HEIGHT  // 2.5 blocks
@@ -259,7 +265,7 @@ Volume = 1.6 × 1.4 × 2.5 = 5.6 cubic blocks
 
 For fine collision detection, the system uses a **secant sphere test**:
 
-```
+```text
 secant_radius = Config.Combat.HITBOXES_SECANT_RADIUS  // 0.4 blocks
 ```
 
@@ -301,14 +307,14 @@ IDLE → CASTING → EXECUTING → RECOVERING → IDLE
 
 #### CASTING State
 
-```bash
+```text
 duration = Config.Combat.ATTACKS_CAST_TIMING_MIN_DURATION  // 1 tick (minimum)
          to Config.Combat.ATTACKS_CAST_TIMING_MAX_DURATION  // 3 ticks (maximum)
 ```
 
 Cast duration decreases with combo count:
 
-```bash
+```text
 cast_duration = max_duration - (combo_count * reduction_rate)
               = 3 - (combo_count * 0.2)
 ```
@@ -320,6 +326,7 @@ $$t_{cast} = \max(t_{min}, t_{max} - n_{combo} \times r_{reduction})$$
 $$t_{cast} = \max(1, 3 - n_{combo} \times 0.2)$$
 
 Where:
+
 - $t_{cast}$ = Cast duration (ticks)
 - $t_{min}$ = Minimum cast duration (1 tick)
 - $t_{max}$ = Maximum cast duration (3 ticks)
@@ -339,14 +346,14 @@ Where:
 
 #### EXECUTING State
 
-```bash
+```text
 duration = Config.Combat.ATTACKS_DURATION_MULTIPLIER * attack_speed
          = 500ms * attack_speed
 ```
 
 Attack iterations:
 
-```bash
+```text
 iterations = Config.Combat.ATTACK_CLASS_TIMING_ATTACK_ITERATIONS  // 5
 
 progress_per_iteration = (end_value - start_value) / iterations
@@ -361,6 +368,7 @@ $$\Delta p = \frac{p_{end} - p_{start}}{n_{iterations}} = \frac{1.0 - 0.0}{5} = 
 $$p_i = p_{start} + i \times \Delta p, \quad i \in [0, n_{iterations})$$
 
 Where:
+
 - $\Delta p$ = Progress increment per iteration
 - $p_{start}$ = Start progress value (0.0)
 - $p_{end}$ = End progress value (1.0)
@@ -378,19 +386,19 @@ Hitbox detection is performed at **each iteration**, allowing for multiple hits 
 
 Combos are maintained through a timing window:
 
-```bash
+```text
 combo_window = Config.Timing.ATTACKS_COMBO_WINDOW_BASE  // 3 ticks
 ```
 
 If a new attack is initiated within the combo window:
 
-```bash
+```text
 combo_count++
 ```
 
 Otherwise:
 
-```bash
+```text
 combo_count = 0
 ```
 
@@ -398,7 +406,7 @@ combo_count = 0
 
 Down air attacks are triggered based on player velocity:
 
-```bash
+```text
 down_air_threshold = Config.Combat.ATTACKS_DOWN_AIR_THRESHOLD  // -0.85
 
 dot_product = normalize(player_velocity) · DOWN_VECTOR
@@ -414,6 +422,7 @@ $$\hat{v}_{player} \cdot \vec{d}_{down} < \theta_{threshold}$$
 $$\frac{\vec{v}_{player}}{|\vec{v}_{player}|} \cdot (0, -1, 0) < -0.85$$
 
 Where:
+
 - $\hat{v}_{player}$ = Normalized player velocity vector
 - $\vec{d}_{down}$ = Down direction vector (0, -1, 0)
 - $\theta_{threshold}$ = Dot product threshold (-0.85)
@@ -429,7 +438,7 @@ Where:
 
 Impalement occurs when a thrown item pins an entity:
 
-```bash
+```text
 if (item_collides_with_entity && velocity_high_enough):
     impale(entity, item)
 ```
@@ -438,7 +447,7 @@ if (item_collides_with_entity && velocity_high_enough):
 
 Impaled entities take periodic damage:
 
-```bash
+```text
 damage_per_tick = Config.Combat.IMPALEMENT_DAMAGE_PER_TICK  // 2.0 HP
 ticks_between_damage = Config.Combat.IMPALEMENT_TICKS_BETWEEN_DAMAGE  // 10 ticks
 
@@ -454,6 +463,7 @@ $$DPS = \frac{D_{tick}}{t_{interval}} \times r_{tick}$$
 $$DPS = \frac{2.0 \text{ HP}}{10 \text{ ticks}} \times 20 \frac{\text{ticks}}{\text{second}} = 4.0 \frac{\text{HP}}{\text{second}}$$
 
 Where:
+
 - $DPS$ = Damage per second
 - $D_{tick}$ = Damage per tick (2.0 HP)
 - $t_{interval}$ = Ticks between damage (10 ticks)
@@ -463,7 +473,7 @@ Where:
 
 Each entity can be impaled by multiple items:
 
-```bash
+```text
 max_impalements = Config.Combat.IMPALEMENT_MAX_IMPALEMENTS  // 3
 ```
 
@@ -473,7 +483,7 @@ After reaching the limit, new impalements replace the oldest.
 
 Head impalements may cause entities to "look at" the item:
 
-```bash
+```text
 head_zone_ratio = Config.Combat.IMPALEMENT_HEAD_ZONE_RATIO  // 0.8
 
 head_zone_height = entity_height * head_zone_ratio
@@ -490,6 +500,7 @@ $$h_{head} = h_{entity} \times r_{zone}$$
 $$y_{impale} > y_{entity} + h_{head} \implies \text{head impalement}$$
 
 Where:
+
 - $h_{head}$ = Head zone height threshold
 - $h_{entity}$ = Total entity height
 - $r_{zone}$ = Head zone ratio (0.8 = top 20% of entity)
@@ -506,7 +517,7 @@ head_follow_exceptions = [EntityType.SPIDER]
 
 Impaled items check for ground collision:
 
-```bash
+```text
 check_interval = Config.Combat.IMPALEMENT_PIN_CHECK_INTERVAL  // 2 ticks
 max_iterations = Config.Combat.IMPALEMENT_PIN_MAX_ITERATIONS  // 50
 
@@ -547,7 +558,7 @@ Each aspect has:
 
 Defensive resource depleted by incoming attacks:
 
-```
+```text
 current = Config.Entity.COMBAT_PROFILE_SHARDS_CURRENT  // 10.0
 regen_period = Config.Entity.COMBAT_PROFILE_SHARDS_REGEN_PERIOD  // 50 ticks (2.5s)
 regen_amount = Config.Entity.COMBAT_PROFILE_SHARDS_REGEN_AMOUNT  // 1.0
@@ -564,6 +575,7 @@ $$R_{regen} = \frac{A_{regen}}{t_{period}} \times r_{tick}$$
 $$R_{regen} = \frac{1.0}{50 \text{ ticks}} \times 20 \frac{\text{ticks}}{\text{second}} = 0.4 \frac{\text{shards}}{\text{second}}$$
 
 Where:
+
 - $R_{regen}$ = Regeneration rate (shards/second)
 - $A_{regen}$ = Amount regenerated per period (1.0 shards)
 - $t_{period}$ = Time between regeneration (50 ticks)
@@ -573,7 +585,7 @@ Where:
 
 Damage reduction layer:
 
-```
+```text
 current = Config.Entity.COMBAT_PROFILE_TOUGHNESS_CURRENT  // 20.0 HP
 regen_period = Config.Entity.COMBAT_PROFILE_TOUGHNESS_REGEN_PERIOD  // 20 ticks (1s)
 regen_amount = Config.Entity.COMBAT_PROFILE_TOUGHNESS_REGEN_AMOUNT  // 0.5 HP
@@ -585,7 +597,7 @@ Regen Rate = 0.5 / 20 * 20 = 0.5 HP/second
 
 Special ability resource:
 
-```
+```text
 current = Config.Entity.COMBAT_PROFILE_SOULFIRE_CURRENT  // 100.0 points
 regen_period = Config.Entity.COMBAT_PROFILE_SOULFIRE_REGEN_PERIOD  // 5 ticks (0.25s)
 regen_amount = Config.Entity.COMBAT_PROFILE_SOULFIRE_REGEN_AMOUNT  // 0.2 points
@@ -597,7 +609,7 @@ Regen Rate = 0.2 / 5 * 20 = 0.8 points/second
 
 Combat stance/technique points:
 
-```
+```text
 current = Config.Entity.COMBAT_PROFILE_FORM_CURRENT  // 10.0 points
 regen_period = Config.Entity.COMBAT_PROFILE_FORM_REGEN_PERIOD  // 60 ticks (3s)
 regen_amount = Config.Entity.COMBAT_PROFILE_FORM_REGEN_AMOUNT  // 1.0 point

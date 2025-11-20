@@ -89,7 +89,7 @@ Note: *Must be holding a shield in offhand for right clicking functionality*
 
 ### Project Structure
 
-```
+```text
 src/main/java/btm/sword/
 ├── commands/         # Command handlers
 ├── listeners/        # Event listeners

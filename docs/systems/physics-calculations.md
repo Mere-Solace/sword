@@ -16,13 +16,14 @@ This document explains the physics simulation systems used in Sword: Combat Evol
 
 ### Overview
 
-Thrown items (swords, axes, tools) are simulated as physics-based projectiles with custom gravity, rotation, and collision detection. The system uses Minecraft's display entities for visual representation while maintaining separate physics state.
+Thrown items (swords, axes, tools) are simulated as physics-based projectiles with custom gravity, rotation, and collision detection.
+The system uses Minecraft's display entities for visual representation while maintaining separate physics state.
 
 ### Position Update
 
 Each tick, the thrown item position is updated:
 
-```
+```text
 position_new = position_old + velocity * delta_time
 ```
 
@@ -44,7 +45,8 @@ Where `delta_time = 1 tick` in the game loop.
 The velocity is decomposed into three components:
 
 **Forward Velocity**:
-```
+
+```text
 velocity_forward = throw_direction * throw_force
 ```
 
@@ -61,7 +63,8 @@ Where:
 Set at throw time based on [`Config.Movement.TOSS_BASE_FORCE`](../../src/main/java/btm/sword/config/Config.java) (1.5 blocks/tick).
 
 **Gravity Velocity**:
-```
+
+```text
 velocity_gravity += gravity_acceleration * (1 / gravity_damper)
 ```
 
@@ -78,16 +81,18 @@ Where:
 Applied every tick. See [Gravity Simulation](#gravity-simulation) for details.
 
 **Trajectory Rotation**:
-```
+
+```text
 velocity = rotate(velocity, trajectory_rotation_angle)
 ```
+
 Gradually curves the trajectory. See [Rotation Mechanics](#rotation-mechanics).
 
 ### Display Offset
 
 The visual item display is offset from the physics position for better appearance:
 
-```
+```text
 display_position = physics_position + display_offset
 
 display_offset = (
@@ -116,7 +121,7 @@ This prevents the item from appearing to intersect with the ground or player.
 
 The throw origin is offset from the player position for realistic throw mechanics:
 
-```
+```text
 throw_origin = player_eye_location + origin_offset
 
 origin_offset = (
@@ -154,7 +159,7 @@ This makes the throw feel like it comes from the player's hand rather than their
 
 Instead of using Minecraft's default gravity (0.08 blocks/tick²), the plugin uses a **damped gravity model**:
 
-```
+```text
 gravity_acceleration = minecraft_gravity / gravity_damper
                      = 0.08 / 46.0
                      = 0.001739 blocks/tick²
@@ -171,7 +176,8 @@ Where:
 - $d_{gravity}$ = Gravity damper (`Config.Physics.THROWN_ITEMS_GRAVITY_DAMPER` = 46.0)
 
 **Example**:
-```
+
+```text
 a_gravity = 0.08 / 46.0
           = 0.001739 blocks/tick²
           ≈ 46× slower than default Minecraft gravity
@@ -180,11 +186,13 @@ a_gravity = 0.08 / 46.0
 ### Why Damped Gravity?
 
 **Default Minecraft Gravity Issues**:
+
 - Items fall too fast (< 1 second flight time)
 - Limited throw range (< 10 blocks)
 - Unrealistic arc for combat projectiles
 
 **Damped Gravity Benefits**:
+
 - Longer flight time (2-4 seconds)
 - Extended throw range (20-40 blocks)
 - More visible and trackable projectiles
@@ -218,7 +226,7 @@ While the damped model prevents true terminal velocity, projectiles naturally sl
 
 Each thrown item rotates based on its item type for visual flair:
 
-```
+```text
 rotation_angle += rotation_speed_per_type * delta_time
 ```
 
@@ -248,6 +256,7 @@ Configured via [`Config.Physics.THROWN_ITEMS_ROTATION_SPEED_*`](../../src/main/j
 | Default   | π/32 (0.098)              | 35°/s          | Slow clockwise spin |
 
 **Design Rationale**:
+
 - **Swords** don't rotate to maintain "blade-forward" aesthetic
 - **Tools** tumble to emphasize weight and momentum
 - **Negative speeds** create satisfying counter-clockwise motion matching throw arc
@@ -256,7 +265,7 @@ Configured via [`Config.Physics.THROWN_ITEMS_ROTATION_SPEED_*`](../../src/main/j
 
 In addition to visual rotation, the velocity vector itself rotates slightly each tick:
 
-```
+```text
 rotation_angle = Config.Physics.THROWN_ITEMS_TRAJECTORY_ROTATION
                = 0.03696 radians/tick
                = 2.12 degrees/tick
@@ -276,19 +285,22 @@ Where:
 - $\vec{v}_t$ = Current velocity vector
 
 **Angle Conversion**:
-```
+
+```text
 α_traj = 0.03696 rad/tick
        = 2.12 degrees/tick
        = 42.4 degrees/second (at 20 ticks/second)
 ```
 
 This creates a **curved trajectory** that:
+
 - Looks more dynamic than a simple parabola
 - Prevents perfectly straight throws
 - Adds unpredictability for PvP balance
 
 **Mathematical Implementation**:
-```
+
+```text
 velocity_new = rotate_around_axis(velocity_old, up_vector, rotation_angle)
 ```
 
@@ -302,7 +314,7 @@ When an attack hits, knockback is applied based on several factors:
 
 #### Base Knockback Formula
 
-```
+```text
 knockback = attack_direction * knockback_strength
 
 Where:
@@ -328,7 +340,7 @@ Where:
 
 Players on the ground receive reduced knockback:
 
-```
+```text
 if (target.is_grounded()):
     knockback *= Config.Physics.ATTACK_VELOCITY_GROUNDED_DAMPING_HORIZONTAL  // 0.3
     knockback.y *= Config.Physics.ATTACK_VELOCITY_GROUNDED_DAMPING_VERTICAL   // 0.4
@@ -350,7 +362,8 @@ Where:
 - $D_v$ = Vertical damping (`Config.Physics.ATTACK_VELOCITY_GROUNDED_DAMPING_VERTICAL` = 0.4)
 
 **Example** (grounded target):
-```
+
+```text
 Original knockback: (1.0, 0.5, 0.0) blocks/tick
 After damping:      (0.3, 0.2, 0.0) blocks/tick
                     (70% horizontal reduction, 60% vertical reduction)
@@ -362,7 +375,7 @@ This prevents grounded players from being launched excessively.
 
 All knockback includes a vertical boost:
 
-```
+```text
 knockback.y += Config.Physics.ATTACK_VELOCITY_KNOCKBACK_VERTICAL_BASE  // 0.25 blocks/tick
 ```
 
@@ -376,7 +389,8 @@ Where:
 - $B_v$ = Vertical base boost (`Config.Physics.ATTACK_VELOCITY_KNOCKBACK_VERTICAL_BASE` = 0.25 blocks/tick)
 
 **Example**:
-```
+
+```text
 Initial knockback.y = 0.2 blocks/tick
 After boost:         = 0.2 + 0.25 = 0.45 blocks/tick
 ```
@@ -387,7 +401,7 @@ This ensures targets are lifted off the ground, making combos possible.
 
 Horizontal knockback is scaled:
 
-```
+```text
 knockback.xz *= Config.Physics.ATTACK_VELOCITY_KNOCKBACK_HORIZONTAL_MODIFIER  // 0.1
 ```
 
@@ -401,7 +415,8 @@ Where:
 - $M_h$ = Horizontal modifier (`Config.Physics.ATTACK_VELOCITY_KNOCKBACK_HORIZONTAL_MODIFIER` = 0.1)
 
 **Example**:
-```
+
+```text
 Initial horizontal knockback: (1.0, 0.0, 0.5) blocks/tick
 After modifier:               (0.1, 0.0, 0.05) blocks/tick
                               (90% horizontal reduction)
@@ -413,7 +428,7 @@ This prevents excessive horizontal displacement while maintaining vertical lift.
 
 The final knockback is scaled by attack normal:
 
-```
+```text
 knockback *= Config.Physics.ATTACK_VELOCITY_KNOCKBACK_NORMAL_MULTIPLIER  // 0.7
 ```
 
@@ -433,7 +448,7 @@ This ensures consistent knockback regardless of attack angle.
 
 Thrown items apply different knockback based on player state:
 
-```
+```text
 if (target.is_grounded()):
     knockback = direction * Config.Combat.THROWN_DAMAGE_SWORD_AXE_KNOCKBACK_GROUNDED  // 0.7
 else:
@@ -453,7 +468,8 @@ Where:
   - If airborne: $M_{state}$ = `Config.Combat.THROWN_DAMAGE_SWORD_AXE_KNOCKBACK_AIRBORNE` = 1.0
 
 **Comparison**:
-```
+
+```text
 Grounded: knockback = direction * 0.7 blocks/tick
 Airborne: knockback = direction * 1.0 blocks/tick
 Difference: 1.0 / 0.7 ≈ 1.43× (43% more knockback when airborne)
@@ -464,16 +480,19 @@ Airborne targets receive **43% more knockback** (1.0 vs 0.7), rewarding aerial t
 ### Design Rationale
 
 **Why Reduced Grounded Knockback?**
+
 - Prevents infinite juggling
 - Gives grounded players defensive advantage
 - Encourages positioning and movement
 
 **Why Vertical Boost?**
+
 - Enables combo systems (launch → follow-up)
 - Looks more dramatic and satisfying
 - Prevents targets from immediately retaliating
 
 **Why Separate Airborne Multiplier?**
+
 - Rewards skillful aerial attacks
 - Creates risk/reward for jump attacks
 - Adds depth to combat positioning
@@ -485,12 +504,14 @@ Airborne targets receive **43% more knockback** (1.0 vs 0.7), rewarding aerial t
 All physics parameters are configured via [`Config.Physics`](../../src/main/java/btm/sword/config/Config.java):
 
 ### Thrown Item Physics
+
 - `THROWN_ITEMS_GRAVITY_DAMPER` (46.0) - Gravity reduction factor
 - `THROWN_ITEMS_TRAJECTORY_ROTATION` (0.03696 rad/tick) - Velocity curve rate
 - `THROWN_ITEMS_DISPLAY_OFFSET_X/Y/Z` - Visual position offset
 - `THROWN_ITEMS_ORIGIN_OFFSET_FORWARD/UP/BACK` - Throw origin offset
 
 ### Rotation Speeds
+
 - `THROWN_ITEMS_ROTATION_SPEED_SWORD` (0.0 rad/tick) - Sword rotation
 - `THROWN_ITEMS_ROTATION_SPEED_AXE` (-π/8 rad/tick) - Axe rotation
 - `THROWN_ITEMS_ROTATION_SPEED_HOE` (-π/8 rad/tick) - Hoe rotation
@@ -500,6 +521,7 @@ All physics parameters are configured via [`Config.Physics`](../../src/main/java
 - `THROWN_ITEMS_ROTATION_SPEED_DEFAULT_SPEED` (π/32 rad/tick) - Default rotation
 
 ### Attack Knockback
+
 - `ATTACK_VELOCITY_GROUNDED_DAMPING_HORIZONTAL` (0.3) - Horizontal damping for grounded targets
 - `ATTACK_VELOCITY_GROUNDED_DAMPING_VERTICAL` (0.4) - Vertical damping for grounded targets
 - `ATTACK_VELOCITY_KNOCKBACK_VERTICAL_BASE` (0.25 blocks/tick) - Base upward boost
@@ -507,10 +529,12 @@ All physics parameters are configured via [`Config.Physics`](../../src/main/java
 - `ATTACK_VELOCITY_KNOCKBACK_NORMAL_MULTIPLIER` (0.7) - Overall knockback scaling
 
 ### Thrown Item Knockback
+
 - `THROWN_DAMAGE_SWORD_AXE_KNOCKBACK_GROUNDED` (0.7) - Grounded knockback
 - `THROWN_DAMAGE_SWORD_AXE_KNOCKBACK_AIRBORNE` (1.0) - Airborne knockback
 - `THROWN_DAMAGE_OTHER_KNOCKBACK_MULTIPLIER` (0.7) - Non-sword/axe knockback
 
 For implementation details, see:
+
 - [`ThrownItem.java`](../../src/main/java/btm/sword/system/action/utility/thrown/ThrownItem.java) - Physics simulation
 - [`Attack.java`](../../src/main/java/btm/sword/system/attack/Attack.java) - Knockback application
