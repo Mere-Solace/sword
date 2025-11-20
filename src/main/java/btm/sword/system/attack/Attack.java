@@ -87,7 +87,6 @@ public class Attack extends SwordAction implements Runnable {
 
         hitDuringAttack = new HashSet<>();
 
-        // Using static Config pattern instead of ConfigManager
         this.attackMilliseconds = Config.Combat.ATTACK_CLASS_TIMING_ATTACK_DURATION;
         this.attackIterations = Config.Combat.ATTACK_CLASS_TIMING_ATTACK_ITERATIONS;
         this.attackStartValue = Config.Combat.ATTACK_CLASS_TIMING_ATTACK_START_VALUE;
@@ -106,10 +105,10 @@ public class Attack extends SwordAction implements Runnable {
     }
 
     public void calcTickValues() {
-        int numOfTicks = attackMilliseconds/50;
+        int numOfTicks = attackMilliseconds/Prefab.Value.MILLISECONDS_PER_TICK;
         this.ticks = numOfTicks <= 0 ? 1 : numOfTicks + 1;
         int msPerIteration = attackMilliseconds/attackIterations;
-        int ticksPerIteration = msPerIteration/50;
+        int ticksPerIteration = msPerIteration/Prefab.Value.MILLISECONDS_PER_TICK;
         this.tickPeriod = ticksPerIteration <= 0 ? 1 : ticksPerIteration;
     }
 
@@ -279,8 +278,6 @@ public class Attack extends SwordAction implements Runnable {
                     Prefab.Particles.TEST_HIT.display(currentTarget.getChestLocation());
 
                     if (onHitInstructions != null) onHitInstructions.accept(currentTarget);
-                } else {
-                    attacker.message("Target: " + target + " caused an NPE");
                 }
             }
         }
