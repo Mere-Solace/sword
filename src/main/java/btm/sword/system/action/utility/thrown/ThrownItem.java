@@ -410,7 +410,8 @@ public class ThrownItem {
      */
     protected void onGrounded() {
         if (stuckBlock != null) {
-            this.blockDustPillarParticle = new ParticleWrapper(Particle.DUST_PILLAR, 50, 1, 1, 1, stuckBlock.getBlockData());
+            this.blockDustPillarParticle = new ParticleWrapper(Particle.DUST_PILLAR,
+                50, 1, 1, 1, stuckBlock.getBlockData());
             blockDustPillarParticle.display(cur);
         }
         double offset = 0.1;
@@ -517,8 +518,8 @@ public class ThrownItem {
             @Override
             public void run() {
                 RayTraceResult pinnedBlock = target.entity().getWorld().rayTraceBlocks(
-                    target.getChestLocation(), velocity.clone().multiply(1.5),
-                    0.5, FluidCollisionMode.NEVER,
+                    target.getChestLocation(), velocity.clone().normalize(),
+                    Config.Detection.THROW_PIN_RAY_DISTANCE, FluidCollisionMode.NEVER,
                     true);
 
                 if (pinnedBlock == null || pinnedBlock.getHitBlock() == null || pinnedBlock.getHitBlock().getType().isAir())
@@ -601,7 +602,9 @@ public class ThrownItem {
     public void groundedCheck() {
         RayTraceResult hitBlock = display.getWorld()
             .rayTraceBlocks(cur, velocity,
-                cur.toVector().subtract(prev.toVector()).lengthSquared()*0.2,
+                cur.toVector()
+                    .subtract(prev.toVector())
+                    .lengthSquared() * Config.Detection.THROW_GROUND_CHECK_MULTIPLIER,
                 FluidCollisionMode.NEVER, true);
 
         if (hitBlock == null) {
@@ -625,14 +628,15 @@ public class ThrownItem {
         Predicate<Entity> effFilter = getFilter();
 
         if (prev == null) {
-//            thrower.message("Disposing cuz prev was null in hitCheck()");
             disposeNaturally();
         }
 
         RayTraceResult hitEntity = display.getWorld()
             .rayTraceEntities(prev, velocity,
-                cur.toVector().subtract(prev.toVector()).lengthSquared()*0.6,
-                1, effFilter);
+                cur.toVector()
+                    .subtract(prev.toVector())
+                    .lengthSquared() * Config.Detection.THROW_HIT_CHECK_DIST_MULTIPLIER,
+                Config.Detection.THROW_HIT_CHECK_DIST_MULTIPLIER, effFilter);
 
         if (hitEntity == null) return;
 
@@ -654,7 +658,9 @@ public class ThrownItem {
                         !l.isDead() &&
                         l.getType() != EntityType.ARMOR_STAND;
         // Throwing a weapon should not immediately result in catching it, therefore a grace period is in place.
-        return timeStep < Config.Timing.THROWN_ITEMS_CATCH_GRACE_PERIOD ? entity -> filter.test(entity) && entity.getUniqueId() != thrower.getUniqueId() : filter;
+        return timeStep < Config.Timing.THROWN_ITEMS_CATCH_GRACE_PERIOD ?
+            entity -> filter.test(entity) && entity.getUniqueId() != thrower.getUniqueId() :
+            filter;
     }
 
     /**
@@ -665,6 +671,9 @@ public class ThrownItem {
     public void determineOrientation() {
         String name = display.getItemStack().getType().toString();
         Vector3f base = new Vector3f(xDisplayOffset, yDisplayOffset, zDisplayOffset);
+
+        // *** These numbers are fine for now, config later but this system may change.
+
         if (name.endsWith("_SWORD")) {
             display.setTransformation(new Transformation(
                     base.add(new Vector3f()),

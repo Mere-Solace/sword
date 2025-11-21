@@ -1,5 +1,7 @@
 package btm.sword.system.entity.umbral.statemachine.state;
 
+import btm.sword.config.Config;
+
 import org.bukkit.Color;
 
 import btm.sword.system.attack.AttackType;
@@ -18,10 +20,10 @@ public class LungingState extends UmbralStateFacade {
     public void onEnter(UmbralBlade blade) {
         blade.setHitEntity(null);
         blade.setFinishedLunging(false);
-        blade.setTimeCutoff(1.2);
-        blade.setTimeScalingFactor(9);
+        blade.setTimeCutoff(Config.UmbralBlade.LUNGE_TIME_CUTOFF);
+        blade.setTimeScalingFactor(Config.UmbralBlade.LUNGE_TIME_SCALING_FACTOR);
         blade.setCtrlPointsForLunge(AttackType.LUNGE1.controlVectors());
-        blade.onRelease(3);
+        blade.onRelease(Config.UmbralBlade.LUNGE_ON_RELEASE_VELOCITY);
 
         blade.getDisplay().setGlowing(true);
         blade.getDisplay().setGlowColorOverride(Color.fromRGB(1, 1, 1));

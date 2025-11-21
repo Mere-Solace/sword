@@ -6,6 +6,7 @@ import lombok.Setter;
 @Getter
 @Setter
 public class ResourceValue extends AspectValue {
+    /** The base period (in ticks) between regeneration events. */
     private int regenPeriod;
     private float regenAmount;
 

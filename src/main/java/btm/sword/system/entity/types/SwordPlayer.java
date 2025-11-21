@@ -156,7 +156,6 @@ public class SwordPlayer extends Combatant {
     public void onSpawn() {
         super.onSpawn();
         player().getInventory().setItem(8, menuButton);
-        updateVisualStats();
     }
 
     /**

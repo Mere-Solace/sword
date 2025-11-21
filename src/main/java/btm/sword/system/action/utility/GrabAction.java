@@ -2,6 +2,8 @@ package btm.sword.system.action.utility;
 
 import java.util.HashSet;
 
+import btm.sword.config.Config;
+
 import org.bukkit.FluidCollisionMode;
 import org.bukkit.Location;
 import org.bukkit.entity.Entity;
@@ -41,17 +43,20 @@ public class GrabAction extends SwordAction {
      * @param executor The {@link Combatant} performing the grab.
      */
     public static void grab(Combatant executor) {
-        cast(executor, 12,
+        cast(executor, Config.Grab.CAST_DURATION,
         new BukkitRunnable() {
             @Override
             public void run() {
-                int baseDuration = 60;
-                double baseGrabRange = 3;
-                double baseGrabThickness = 0.6;
+                int baseDuration = Config.Grab.BASE_DURATION;
+                double baseGrabRange = Config.Grab.BASE_RANGE;
+                double baseGrabThickness = Config.Grab.BASE_THICKNESS;
 
-                long duration = (long) executor.calcValueAdditive(AspectType.MIGHT, 100L, baseDuration, 0.2);
-                double range = executor.calcValueAdditive(AspectType.WILLPOWER, 4.5, baseGrabRange, 0.1);
-                double grabThickness = executor.calcValueAdditive(AspectType.WILLPOWER, 0.75, baseGrabThickness, 0.1);
+                long duration = (long) executor.calcValueAdditive(AspectType.MIGHT, 100L, baseDuration,
+                    Config.Grab.DURATION_SCALING);
+                double range = executor.calcValueAdditive(AspectType.WILLPOWER, 4.5, baseGrabRange,
+                    Config.Grab.RANGE_SCALING);
+                double grabThickness = executor.calcValueAdditive(AspectType.WILLPOWER, 0.75, baseGrabThickness,
+                    Config.Grab.THICKNESS_SCALING);
 
                 LivingEntity ex = executor.entity();
                 Location o = ex.getEyeLocation();
@@ -87,7 +92,7 @@ public class GrabAction extends SwordAction {
                 Prefab.Particles.GRAB_ATTEMPT.display(target.getLocation());
 
                 RayTraceResult impedanceCheck = ex.getWorld().rayTraceBlocks(
-                        ex.getLocation().add(new Vector(0,0.5,0)),
+                        executor.getChestLocation(),
                         target.getLocation().subtract(ex.getLocation()).toVector().normalize(),
                         Math.sqrt(target.getLocation().subtract(ex.getLocation()).toVector().lengthSquared()), FluidCollisionMode.NEVER,
                         true,
@@ -100,7 +105,7 @@ public class GrabAction extends SwordAction {
                 }
 
                 SwordEntity swordTarget = SwordEntityArbiter.getOrAdd(target.getUniqueId());
-                if (swordTarget.isHit()) return;
+                if (swordTarget == null || swordTarget.isHit()) return;
 
                 if (swordTarget instanceof Combatant c && c.isAttemptingThrow()) c.setThrowCancelled(true);
 
@@ -122,21 +127,26 @@ public class GrabAction extends SwordAction {
                         }
 
                         Vector v = ex.getVelocity();
-                        ex.addPotionEffect(new PotionEffect(PotionEffectType.JUMP_BOOST, 2, 1));
-                        ex.setVelocity(new Vector(v.getX() * 0.2, v.getY(),v.getZ() * 0.2));
+                        ex.addPotionEffect(new PotionEffect(
+                            PotionEffectType.JUMP_BOOST,
+                            Config.Grab.JUMP_BOOST_DURATION, Config.Grab.JUMP_BOOST_AMPLIFIER));
+                        ex.setVelocity(new Vector(
+                            v.getX() * Config.Grab.EXECUTOR_HORIZONTAL_DAMPENING,
+                            v.getY(),
+                            v.getZ() * Config.Grab.EXECUTOR_HORIZONTAL_DAMPENING));
 
-                        double holdDist = 2;
+                        double holdDist = Config.Grab.HOLD_DISTANCE;
                         Vector direction = ex.getLocation().toVector().add(ex.getEyeLocation().getDirection().multiply(holdDist)).subtract(target.getLocation().toVector());
                         double distanceSquared = direction.lengthSquared();
-                        double bufferDistance = 0.4;
-                        double pullSpeed = 0.6;
+                        double bufferDistance = Config.Grab.HOLD_BUFFER;
+                        double pullSpeed = Config.Grab.PULL_SPEED;
 
                         if (distanceSquared < bufferDistance*bufferDistance) {
-                            target.setVelocity(new Vector(0,target.getVelocity().getY()*0.25,0));
+                            target.setVelocity(new Vector(0,target.getVelocity().getY() * Config.Grab.CLOSE_Y_VELOCITY_SCALE,0));
                         }
                         else {
                             double force = pullSpeed;
-                            if (Math.abs(target.getEyeLocation().getY() - ex.getEyeLocation().getY()) > 1.2) {
+                            if (Math.abs(target.getEyeLocation().getY() - ex.getEyeLocation().getY()) > Config.Grab.VERTICAL_FORCE_THRESHOLD) {
                                 force *= 2;
                             }
                             Vector velocity = direction.normalize().multiply(force);

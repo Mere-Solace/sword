@@ -489,8 +489,8 @@ public abstract class SwordEntity {
      */
     public void onToughnessBroken() {
         toughnessBroken = true;
-        aspects.toughness().setEffAmountPercent(2f);
-        aspects.toughness().setEffPeriodPercent(0.2f);
+        aspects.toughness().setEffAmountPercent(Config.Entity.HIT_TOUGH_BREAK_RECHARGE_AMOUNT_PERCENT);
+        aspects.toughness().setEffPeriodPercent(Config.Entity.HIT_TOUGH_BREAK_RECHARGE_PERIOD_PERCENT);
         new BukkitRunnable() {
             @Override
             public void run() {
@@ -501,7 +501,7 @@ public abstract class SwordEntity {
                     cancel();
                 }
 
-                if (aspects.toughness().curPercent() > 0.6) {
+                if (aspects.toughness().curPercent() > Config.Entity.HIT_TOUGH_BREAK_RECHARGE_CUTOFF_PERCENT) {
                     aspects.toughness().setEffAmountPercent(1f);
                     aspects.toughness().setEffPeriodPercent(1f);
                     toughnessBroken = false;
@@ -596,7 +596,9 @@ public abstract class SwordEntity {
         if (self instanceof Player p) {
             return main ? p.getInventory().getItemInMainHand() : p.getInventory().getItemInOffHand();
         }
-        return main ? Objects.requireNonNull(self.getEquipment()).getItemInMainHand() : Objects.requireNonNull(self.getEquipment()).getItemInOffHand();
+        return main ?
+            Objects.requireNonNull(self.getEquipment()).getItemInMainHand() :
+            Objects.requireNonNull(self.getEquipment()).getItemInOffHand();
     }
 
     /**

@@ -300,13 +300,15 @@ public class Attack extends SwordAction implements Runnable {
         RayTraceResult result = attackingEntity.getWorld().rayTraceBlocks(attackLocation, direction, 0.3);
         if (result != null) {
             // enter ground particles
-            new ParticleWrapper(Particle.BLOCK, 5, 0.5, 0.5, 0.5,
+            new ParticleWrapper(Particle.BLOCK, 5, 0.5, 0.5, 0.5, //TODO: config or naw
                     Objects.requireNonNull(result.getHitBlock()).getBlockData()).display(attackLocation);
             Prefab.Particles.COLLIDE.display(attackLocation);
+
             // potential reduction of damage formula
         }
         else if (direction.lengthSquared() > (double) 2 / (attackIterations*attackIterations)) {
             // interpolated particle, same as normal particle
+            // 0.5 - half the length to the particle
             Prefab.Particles.TEST_SWING.display(attackLocation.clone().add(direction.multiply(0.5)));
         }
     }
