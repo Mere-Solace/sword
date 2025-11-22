@@ -1,13 +1,11 @@
 package btm.sword.system.entity.umbral.statemachine.state;
 
 
-import btm.sword.config.Config;
-
-import org.bukkit.Color;
 import org.bukkit.Location;
 import org.bukkit.scheduler.BukkitTask;
 import org.bukkit.util.Vector;
 
+import btm.sword.config.Config;
 import btm.sword.system.entity.umbral.UmbralBlade;
 import btm.sword.system.entity.umbral.input.BladeRequest;
 import btm.sword.system.entity.umbral.statemachine.UmbralStateFacade;
