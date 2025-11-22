@@ -1,9 +1,6 @@
 package btm.sword.system.entity.umbral.statemachine.state;
 
 import btm.sword.config.Config;
-
-import org.bukkit.Color;
-
 import btm.sword.system.attack.AttackType;
 import btm.sword.system.entity.umbral.UmbralBlade;
 import btm.sword.system.entity.umbral.statemachine.UmbralStateFacade;
@@ -26,7 +23,7 @@ public class LungingState extends UmbralStateFacade {
         blade.onRelease(Config.UmbralBlade.LUNGE_ON_RELEASE_VELOCITY);
 
         blade.getDisplay().setGlowing(true);
-        blade.getDisplay().setGlowColorOverride(Color.fromRGB(1, 1, 1));
+        blade.getDisplay().setGlowColorOverride(Config.SwordColor.UMBRAL_GLOW);
     }
 
     @Override

@@ -8,6 +8,7 @@ import org.bukkit.util.Vector;
 import btm.sword.config.Config;
 import btm.sword.util.Prefab;
 
+// TODO: consider - add base range multiplier as well
 public enum AttackType {
     UMBRAL_SLASH1(List.of(
         new Vector(-2,0,0),

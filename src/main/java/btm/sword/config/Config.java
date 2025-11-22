@@ -6,17 +6,15 @@ import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
-import btm.sword.system.attack.AttackType;
-
-import net.kyori.adventure.text.format.TextColor;
-
 import org.bukkit.Color;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Display.Billboard;
 import org.bukkit.entity.EntityType;
 import org.bukkit.util.Vector;
 
+import btm.sword.system.attack.AttackType;
 import btm.sword.util.sound.SoundType;
+import net.kyori.adventure.text.format.TextColor;
 
 /**
  * Static configuration class for Sword: Combat Evolved.
@@ -253,7 +251,7 @@ public class Config {
 
         public static TextColor TEXT_ITEM_NAME = TextColor.color(0, 110, 151);
         static { register(
-            "color.title_input_string",
+            "color.text_item_name",
             TEXT_ITEM_NAME, TextColor.class,
             v -> TEXT_ITEM_NAME = v,
             Config::loadTextColor
@@ -261,7 +259,7 @@ public class Config {
 
         public static TextColor TEXT_ITEM_CONTROLS = TextColor.color(173, 109, 255);
         static { register(
-            "color.text_cool",
+            "color.text_item_controls",
             TEXT_ITEM_CONTROLS, TextColor.class,
             v -> TEXT_ITEM_CONTROLS = v,
             Config::loadTextColor
@@ -269,7 +267,7 @@ public class Config {
 
         public static TextColor TEXT_ITEM_HEADER = TextColor.color(225, 225, 225);
         static { register(
-            "color.text_cool",
+            "color.text_item_header",
             TEXT_ITEM_HEADER, TextColor.class,
             v -> TEXT_ITEM_HEADER = v,
             Config::loadTextColor
@@ -277,7 +275,7 @@ public class Config {
 
         public static TextColor TEXT_ITEM_BASE = TextColor.color(120, 120, 120);
         static { register(
-            "color.text_cool",
+            "color.text_item_base",
             TEXT_ITEM_BASE, TextColor.class,
             v -> TEXT_ITEM_BASE = v,
             Config::loadTextColor
@@ -293,19 +291,20 @@ public class Config {
 
         public static TextColor TEXT_COOL_DARK = TextColor.color(51, 60, 75);
         static { register(
-            "color.text_cool",
+            "color.text_cool_dark",
             TEXT_COOL_DARK, TextColor.class,
             v -> TEXT_COOL_DARK = v,
             Config::loadTextColor
         ); }
 
         public static Color UMBRAL_GLOW = Color.fromRGB(50, 50, 50);
-        static { register("color.text_cool",
+        static { register("color.umbral_glow",
             UMBRAL_GLOW, Color.class,
             v -> UMBRAL_GLOW = v,
             Config::loadColor
         ); }
     }
+    //endregion
 
     // ==============================================================================
     //region ANGLE - Common angle constants
@@ -328,7 +327,7 @@ public class Config {
             Config::loadFloat
         ); }
     }
-
+    //endregion
 
     // ==============================================================================
     //region PHYSICS - Projectile motion, gravity, and velocity
@@ -1596,7 +1595,7 @@ public class Config {
 
         public static int SPEED_DURATION = 5;
         static { register(
-            "potions.speed_duration",
+            "movement.speed_duration",
             SPEED_DURATION, Integer.class,
             v -> SPEED_DURATION = v,
             ConfigurationSection::getInt
@@ -1604,7 +1603,7 @@ public class Config {
 
         public static int SPEED_AMPLIFIER = 3;
         static { register(
-            "potions.speed_amplifier",
+            "movement.speed_amplifier",
             SPEED_AMPLIFIER, Integer.class,
             v -> SPEED_AMPLIFIER = v,
             ConfigurationSection::getInt
@@ -2098,7 +2097,7 @@ public class Config {
     public static class Grab {
         public static int CAST_DURATION = 12;
         static { register(
-            "grab.base_duration",
+            "grab.cast_duration",
             CAST_DURATION, Integer.class,
             v -> CAST_DURATION = v,
             ConfigurationSection::getInt
@@ -2229,7 +2228,7 @@ public class Config {
             ConfigurationSection::getDouble
         ); }
     }
-//endregion
+    //endregion
 
     // ==============================================================================
     //region UmbralBlade States
@@ -2259,4 +2258,5 @@ public class Config {
             ConfigurationSection::getInt
         ); }
     }
+    //endregion
 }

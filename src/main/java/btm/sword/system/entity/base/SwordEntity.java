@@ -7,7 +7,6 @@ import java.util.UUID;
 
 import org.bukkit.Location;
 import org.bukkit.Material;
-import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.ArmorStand;
 import org.bukkit.entity.Display;
 import org.bukkit.entity.Entity;
@@ -222,6 +221,10 @@ public abstract class SwordEntity {
                 .build();
 
         statusDisplay.text(displayText);
+
+        if (entity() instanceof Player p) {
+            p.hideEntity(Sword.getInstance(), statusDisplay);
+        }
     }
 
     private void restartStatusDisplay() {
@@ -234,6 +237,9 @@ public abstract class SwordEntity {
         if (entity().getType() == EntityType.ITEM_DISPLAY || entity().getType() == EntityType.ITEM) return;
 
         statusDisplay = (TextDisplay) entity().getWorld().spawnEntity(entity().getEyeLocation().setDirection(Config.Direction.NORTH()), EntityType.TEXT_DISPLAY);
+        if (entity() instanceof Player p) {
+            p.hideEntity(Sword.getInstance(), statusDisplay);
+        }
         statusDisplay.addScoreboardTag("remove_on_shutdown");
         statusDisplay.setNoPhysics(true);
         statusDisplay.setBillboard(Display.Billboard.CENTER);
@@ -256,10 +262,6 @@ public abstract class SwordEntity {
 
         entity().addPassenger(statusDisplay);
         statusDisplay.setBillboard(Display.Billboard.VERTICAL);
-
-        if (entity() instanceof Player p) {
-            p.hideEntity(Sword.getInstance(), statusDisplay);
-        }
 
         setStatusActive(true);
     }

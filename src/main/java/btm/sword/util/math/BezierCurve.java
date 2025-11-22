@@ -1,11 +1,11 @@
 package btm.sword.util.math;
 
+import java.util.List;
+import java.util.function.Function;
+
 import org.bukkit.Location;
 import org.bukkit.entity.Entity;
 import org.bukkit.util.Vector;
-
-import java.util.List;
-import java.util.function.Function;
 
 // TODO: Implement this everywhere
 public class BezierCurve {

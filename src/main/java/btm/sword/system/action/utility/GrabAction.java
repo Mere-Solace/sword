@@ -2,8 +2,6 @@ package btm.sword.system.action.utility;
 
 import java.util.HashSet;
 
-import btm.sword.config.Config;
-
 import org.bukkit.FluidCollisionMode;
 import org.bukkit.Location;
 import org.bukkit.entity.Entity;
@@ -17,6 +15,7 @@ import org.bukkit.util.RayTraceResult;
 import org.bukkit.util.Vector;
 
 import btm.sword.Sword;
+import btm.sword.config.Config;
 import btm.sword.system.action.SwordAction;
 import btm.sword.system.action.utility.thrown.InteractiveItemArbiter;
 import btm.sword.system.entity.SwordEntityArbiter;
