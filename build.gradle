@@ -36,12 +36,8 @@ dependencies {
     annotationProcessor 'org.projectlombok:lombok:1.18.34'
 }
 
-sourceSets {
-    main {
-        resources {
-            srcDir 'src/main/resources'
-        }
-    }
+tasks.jar {
+    duplicatesStrategy = DuplicatesStrategy.INCLUDE
 }
 
 tasks {
