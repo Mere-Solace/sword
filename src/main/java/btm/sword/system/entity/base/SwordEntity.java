@@ -27,6 +27,7 @@ import org.joml.Vector3f;
 import com.destroystokyo.paper.event.entity.EntityRemoveFromWorldEvent;
 
 import btm.sword.Sword;
+import btm.sword.config.Config;
 import btm.sword.system.combat.Affliction;
 import btm.sword.system.entity.SwordEntityArbiter;
 import btm.sword.system.entity.aspect.AspectType;
@@ -220,6 +221,10 @@ public abstract class SwordEntity {
                 .build();
 
         statusDisplay.text(displayText);
+
+        if (entity() instanceof Player p) {
+            p.hideEntity(Sword.getInstance(), statusDisplay);
+        }
     }
 
     private void restartStatusDisplay() {
@@ -231,7 +236,10 @@ public abstract class SwordEntity {
         if (!(entity() instanceof LivingEntity living) || living instanceof ArmorStand) return;
         if (entity().getType() == EntityType.ITEM_DISPLAY || entity().getType() == EntityType.ITEM) return;
 
-        statusDisplay = (TextDisplay) entity().getWorld().spawnEntity(entity().getEyeLocation().setDirection(Prefab.Direction.NORTH()), EntityType.TEXT_DISPLAY);
+        statusDisplay = (TextDisplay) entity().getWorld().spawnEntity(entity().getEyeLocation().setDirection(Config.Direction.NORTH()), EntityType.TEXT_DISPLAY);
+        if (entity() instanceof Player p) {
+            p.hideEntity(Sword.getInstance(), statusDisplay);
+        }
         statusDisplay.addScoreboardTag("remove_on_shutdown");
         statusDisplay.setNoPhysics(true);
         statusDisplay.setBillboard(Display.Billboard.CENTER);
@@ -244,10 +252,9 @@ public abstract class SwordEntity {
                 )
         );
         statusDisplay.setShadowed(true);
-        var displayConfig = btm.sword.config.ConfigManager.getInstance().getDisplay();
         statusDisplay.setBrightness(new Display.Brightness(
-            displayConfig.getStatusDisplayBlockBrightness(),
-            displayConfig.getStatusDisplaySkyBrightness()
+            btm.sword.config.Config.Display.STATUS_DISPLAY_BLOCK_BRIGHTNESS,
+            btm.sword.config.Config.Display.STATUS_DISPLAY_SKY_BRIGHTNESS
         ));
         statusDisplay.setPersistent(false);
 
@@ -255,10 +262,6 @@ public abstract class SwordEntity {
 
         entity().addPassenger(statusDisplay);
         statusDisplay.setBillboard(Display.Billboard.VERTICAL);
-
-        if (entity() instanceof Player p) {
-            p.hideEntity(Sword.getInstance(), statusDisplay);
-        }
 
         setStatusActive(true);
     }
@@ -408,7 +411,13 @@ public abstract class SwordEntity {
      * @param knockbackVelocity velocity vector to apply knockback
      * @param afflictions optional afflictions to apply from the hit
      */
-    public void hit(Combatant source, long hitInvulnerableTickDuration, int baseNumShards, float baseToughnessDamage, float baseSoulfireReduction, Vector knockbackVelocity, Affliction... afflictions) {
+    public void hit(Combatant source,
+                    long hitInvulnerableTickDuration,
+                    int baseNumShards,
+                    float baseToughnessDamage,
+                    float baseSoulfireReduction,
+                    Vector knockbackVelocity,
+                    Affliction... afflictions) {
         if (hit)
             return;
         else
@@ -418,7 +427,8 @@ public abstract class SwordEntity {
         self.damage(0.01);
 
         Prefab.Particles.TEST_HIT.display(getChestLocation());
-        SoundUtil.playSound(source.entity(), SoundType.ENTITY_PLAYER_ATTACK_STRONG, 0.9f, 1f);
+        SoundUtil.playSound(source.entity(), SoundType.ENTITY_PLAYER_ATTACK_STRONG,
+            Config.Audio.ENTITY_HIT_CONNECT_VOLUME, Config.Audio.ENTITY_HIT_CONNECT_PITCH);
 
         if (aspects.toughness().remove(baseToughnessDamage)) {
             if (!toughnessBroken) {
@@ -441,8 +451,8 @@ public abstract class SwordEntity {
             }
             shardsLost += baseNumShards;
 
-            if (shardsLost >= 0.75 * aspects.shards().effectiveValue()) {
-                aspects.toughness().setCurPercent(0.9f);
+            if (shardsLost >= Config.Combat.SHARDS_LOST_PERCENT_TOUGHNESS_RESET * aspects.shards().effectiveValue()) {
+                aspects.toughness().setCurPercent(Config.Combat.TOUGHNESS_RECHARGE_PERCENT);
             }
         }
 
@@ -460,7 +470,7 @@ public abstract class SwordEntity {
      * Intended to be overridden in subclasses.
      */
     public void displayShardLoss() {
-
+        // TODO: later
     }
 
     /**
@@ -481,8 +491,8 @@ public abstract class SwordEntity {
      */
     public void onToughnessBroken() {
         toughnessBroken = true;
-        aspects.toughness().setEffAmountPercent(2f);
-        aspects.toughness().setEffPeriodPercent(0.2f);
+        aspects.toughness().setEffAmountPercent(Config.Entity.HIT_TOUGH_BREAK_RECHARGE_AMOUNT_PERCENT);
+        aspects.toughness().setEffPeriodPercent(Config.Entity.HIT_TOUGH_BREAK_RECHARGE_PERIOD_PERCENT);
         new BukkitRunnable() {
             @Override
             public void run() {
@@ -493,7 +503,7 @@ public abstract class SwordEntity {
                     cancel();
                 }
 
-                if (aspects.toughness().curPercent() > 0.6) {
+                if (aspects.toughness().curPercent() > Config.Entity.HIT_TOUGH_BREAK_RECHARGE_CUTOFF_PERCENT) {
                     aspects.toughness().setEffAmountPercent(1f);
                     aspects.toughness().setEffPeriodPercent(1f);
                     toughnessBroken = false;
@@ -588,7 +598,9 @@ public abstract class SwordEntity {
         if (self instanceof Player p) {
             return main ? p.getInventory().getItemInMainHand() : p.getInventory().getItemInOffHand();
         }
-        return main ? Objects.requireNonNull(self.getEquipment()).getItemInMainHand() : Objects.requireNonNull(self.getEquipment()).getItemInOffHand();
+        return main ?
+            Objects.requireNonNull(self.getEquipment()).getItemInMainHand() :
+            Objects.requireNonNull(self.getEquipment()).getItemInOffHand();
     }
 
     /**

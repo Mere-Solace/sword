@@ -99,7 +99,7 @@ public abstract class Combatant extends SwordEntity {
             message("Display is null.");
         }
         umbralBlade.dispose();
-        // TODO: on death umbral blade logic... What should happen here?
+        // TODO: #122 - On death umbral blade logic... What should happen here?
     }
 
     @Override

@@ -1,13 +1,12 @@
 package btm.sword.system.entity.umbral.statemachine.state;
 
-import org.bukkit.Color;
 import org.bukkit.scheduler.BukkitTask;
 
+import btm.sword.config.Config;
 import btm.sword.system.entity.types.SwordPlayer;
 import btm.sword.system.entity.umbral.UmbralBlade;
 import btm.sword.system.entity.umbral.statemachine.UmbralStateFacade;
 import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.format.TextColor;
 
 public class StandbyState extends UmbralStateFacade {
     private BukkitTask followTask;
@@ -18,12 +17,12 @@ public class StandbyState extends UmbralStateFacade {
     @Override
     public void onEnter(UmbralBlade blade) {
         blade.getDisplay().setGlowing(true);
-        blade.getDisplay().setGlowColorOverride(Color.fromRGB(1, 1, 1));
+        blade.getDisplay().setGlowColorOverride(Config.SwordColor.UMBRAL_GLOW);
 
         followTask = blade.hoverBehindWielder();
         blade.startIdleMovement();
         if (blade.getThrower() instanceof SwordPlayer swordPlayer) {
-            swordPlayer.displayTitle(null, Component.text("< Returned >").color(TextColor.color(140, 0, 0)),
+            swordPlayer.displayTitle(null, Component.text("Ready.").color(Config.SwordColor.TEXT_COOL),
                 50, 500, 50);
         }
     }
@@ -37,7 +36,7 @@ public class StandbyState extends UmbralStateFacade {
             followTask.cancel();
     }
 
-    // TODO: move idle movement into this onTick method!
+    // TODO: #121 - Move idle movement into this onTick method
     @Override
     public void onTick(UmbralBlade blade) {
         // Idle movement handled by BukkitRunnable; tick may monitor attack triggers

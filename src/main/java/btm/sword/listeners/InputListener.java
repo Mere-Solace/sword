@@ -79,8 +79,8 @@ public class InputListener implements Listener {
 
         if (swordPlayer.hasPerformedDropAction()) return;
 
-        // TODO: log all interactions and figure out if this fires when PrePlayerAttack fires.
-        // TODO: ^^^ if so, use the flag set in the above method to cancel this event and return.
+        // TODO: #124 - Log all interactions and figure out if this fires when PrePlayerAttack fires.
+        // TODO: #124 - If so, use the flag set in the above method to cancel this event and return.
 
         if ((action == Action.LEFT_CLICK_AIR || action == Action.LEFT_CLICK_BLOCK)) {
             if (swordPlayer.cancelItemInteraction(item, InputType.LEFT)) {

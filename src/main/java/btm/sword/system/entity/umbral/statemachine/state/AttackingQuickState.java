@@ -1,7 +1,6 @@
 package btm.sword.system.entity.umbral.statemachine.state;
 
-import org.bukkit.Color;
-
+import btm.sword.config.Config;
 import btm.sword.system.entity.umbral.UmbralBlade;
 import btm.sword.system.entity.umbral.statemachine.UmbralStateFacade;
 
@@ -45,9 +44,9 @@ public class AttackingQuickState extends UmbralStateFacade {
     public void onEnter(UmbralBlade blade) {
         // Attack execution is handled by performAttack method
         blade.performAttack(5.0, false);
-        // TODO: potentially add per state glow changes or just a method for this
+        // TODO: #121 - Potentially add per state glow changes or just a method for this
         blade.getDisplay().setGlowing(true);
-        blade.getDisplay().setGlowColorOverride(Color.fromRGB(1,1, 1));
+        blade.getDisplay().setGlowColorOverride(Config.SwordColor.UMBRAL_GLOW);
     }
 
     @Override

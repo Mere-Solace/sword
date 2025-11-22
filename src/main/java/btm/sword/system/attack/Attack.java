@@ -16,8 +16,7 @@ import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.util.RayTraceResult;
 import org.bukkit.util.Vector;
 
-import btm.sword.config.ConfigManager;
-import btm.sword.config.section.CombatConfig;
+import btm.sword.config.Config;
 import btm.sword.system.SwordScheduler;
 import btm.sword.system.action.SwordAction;
 import btm.sword.system.entity.SwordEntityArbiter;
@@ -34,8 +33,6 @@ import lombok.Getter;
 import lombok.Setter;
 
 public class Attack extends SwordAction implements Runnable {
-    protected final CombatConfig.AttacksConfig attacksConfig;
-    protected final CombatConfig.AttackClassConfig attackConfig;
 
     protected Combatant attacker;
     protected LivingEntity attackingEntity;
@@ -87,17 +84,15 @@ public class Attack extends SwordAction implements Runnable {
         controlVectors = type.controlVectors();
         this.attackType = type;
         this.orientWithPitch = orientWithPitch;
-        attacksConfig = ConfigManager.getInstance().getCombat().getAttacks();
-        attackConfig = ConfigManager.getInstance().getCombat().getAttackClass();
 
         hitDuringAttack = new HashSet<>();
 
-        this.attackMilliseconds = attackConfig.getTiming().getAttackDuration();
-        this.attackIterations = attackConfig.getTiming().getAttackIterations();
-        this.attackStartValue = attackConfig.getTiming().getAttackStartValue();
-        this.attackEndValue = attackConfig.getTiming().getAttackEndValue();
+        this.attackMilliseconds = Config.Combat.ATTACK_CLASS_TIMING_ATTACK_DURATION;
+        this.attackIterations = Config.Combat.ATTACK_CLASS_TIMING_ATTACK_ITERATIONS;
+        this.attackStartValue = Config.Combat.ATTACK_CLASS_TIMING_ATTACK_START_VALUE;
+        this.attackEndValue = Config.Combat.ATTACK_CLASS_TIMING_ATTACK_END_VALUE;
 
-        this.rangeMultiplier = attackConfig.getModifiers().getRangeMultiplier();
+        this.rangeMultiplier = Config.Combat.ATTACK_CLASS_MODIFIERS_RANGE_MULTIPLIER;
     }
 
     public Attack(AttackType type, boolean orientWithPitch,
@@ -110,10 +105,10 @@ public class Attack extends SwordAction implements Runnable {
     }
 
     public void calcTickValues() {
-        int numOfTicks = attackMilliseconds/50;
+        int numOfTicks = attackMilliseconds/Prefab.Value.MILLISECONDS_PER_TICK;
         this.ticks = numOfTicks <= 0 ? 1 : numOfTicks + 1;
         int msPerIteration = attackMilliseconds/attackIterations;
-        int ticksPerIteration = msPerIteration/50;
+        int ticksPerIteration = msPerIteration/Prefab.Value.MILLISECONDS_PER_TICK;
         this.tickPeriod = ticksPerIteration <= 0 ? 1 : ticksPerIteration;
     }
 
@@ -155,10 +150,10 @@ public class Attack extends SwordAction implements Runnable {
     private void onRun() {
         attacker.setTimeOfLastAttack(System.currentTimeMillis());
         int cooldown = (int) attacker.calcValueReductive(AspectType.FINESSE,
-            attacksConfig.getCastTimingMinDuration(),
-            attacksConfig.getCastTimingMaxDuration(),
-            attacksConfig.getCastTimingReductionRate());
-        attacker.setDurationOfLastAttack(cooldown * attacksConfig.getDurationMultiplier());
+            Config.Combat.ATTACKS_CAST_TIMING_MIN_DURATION,
+            Config.Combat.ATTACKS_CAST_TIMING_MAX_DURATION,
+            Config.Combat.ATTACKS_CAST_TIMING_REDUCTION_RATE);
+        attacker.setDurationOfLastAttack(cooldown * Config.Combat.ATTACKS_DURATION_MULTIPLIER);
         startAttack();
     }
 
@@ -194,7 +189,7 @@ public class Attack extends SwordAction implements Runnable {
         calcTickValues();
 
         curIteration = 0;
-        for (int i = 0; i <= attackIterations; i++) { // TODO: research a better way than scheduling all at once with delays...
+        for (int i = 0; i <= attackIterations; i++) { // TODO: #120 - Research a better way than scheduling all at once with delays
             final int idx = i;
             SwordScheduler.runBukkitTaskLater(
                 new BukkitRunnable() {
@@ -256,7 +251,7 @@ public class Attack extends SwordAction implements Runnable {
         }
     }
 
-    // TODO: Make Particle Effects more dynamic. Low prio.
+    // TODO: #128 - Make Particle Effects more dynamic. Low prio.
     protected void drawAttackEffects() {
         Prefab.Particles.TEST_SWING.display(attackLocation);
     }
@@ -277,14 +272,15 @@ public class Attack extends SwordAction implements Runnable {
 
                 if (!currentTarget.entity().isDead()) {
                     currentTarget.hit(attacker,
-                            5, 1, 15, 6,
+                        Config.Combat.ATTACK_CLASS_HIT_INVULN_TICKS,
+                        Config.Combat.ATTACK_CLASS_HIT_SHARDS,
+                        Config.Combat.ATTACK_CLASS_HIT_TOUGHNESS,
+                        Config.Combat.ATTACK_CLASS_HIT_SOULFIRE,
                             attackType.knockbackFunction().apply(this));
 
                     Prefab.Particles.TEST_HIT.display(currentTarget.getChestLocation());
 
                     if (onHitInstructions != null) onHitInstructions.accept(currentTarget);
-                } else {
-                    attacker.message("Target: " + target + " caused an NPE");
                 }
             }
         }
@@ -292,7 +288,7 @@ public class Attack extends SwordAction implements Runnable {
     }
 
     protected HashSet<LivingEntity> collectHitEntities() {
-        double secantRadius = ConfigManager.getInstance().getCombat().getHitboxes().getSecantRadius();
+        double secantRadius = Config.Combat.HITBOXES_SECANT_RADIUS;
         return HitboxUtil.secant(origin, attackLocation, secantRadius, filter);
     }
 
@@ -304,13 +300,15 @@ public class Attack extends SwordAction implements Runnable {
         RayTraceResult result = attackingEntity.getWorld().rayTraceBlocks(attackLocation, direction, 0.3);
         if (result != null) {
             // enter ground particles
-            new ParticleWrapper(Particle.BLOCK, 5, 0.5, 0.5, 0.5,
+            new ParticleWrapper(Particle.BLOCK, 5, 0.5, 0.5, 0.5, //TODO: config or naw
                     Objects.requireNonNull(result.getHitBlock()).getBlockData()).display(attackLocation);
             Prefab.Particles.COLLIDE.display(attackLocation);
+
             // potential reduction of damage formula
         }
         else if (direction.lengthSquared() > (double) 2 / (attackIterations*attackIterations)) {
             // interpolated particle, same as normal particle
+            // 0.5 - half the length to the particle
             Prefab.Particles.TEST_SWING.display(attackLocation.clone().add(direction.multiply(0.5)));
         }
     }

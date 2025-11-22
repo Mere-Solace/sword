@@ -4,7 +4,7 @@ import org.bukkit.Location;
 import org.bukkit.entity.Entity;
 import org.bukkit.util.Vector;
 
-import btm.sword.config.ConfigManager;
+import btm.sword.config.Config;
 import btm.sword.system.entity.base.SwordEntity;
 
 /**
@@ -24,7 +24,7 @@ public class EntityUtil {
      * @return true if the entity is on ground, false otherwise
      */
     public static boolean isOnGround(Entity entity) {
-        double maxCheckDist = ConfigManager.getInstance().getDetection().getGroundCheckMaxDistance();
+        double maxCheckDist = Config.Detection.GROUND_CHECK_MAX_DISTANCE;
         Location base = entity.getLocation().add(new Vector(0, -maxCheckDist, 0));
 
         double[] offsets = {-0.3, 0, 0.3};

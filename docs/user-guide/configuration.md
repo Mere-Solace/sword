@@ -9,12 +9,14 @@ Sword: Combat Evolved uses a comprehensive configuration system that allows serv
 ### Configuration File Locations
 
 **Live Configuration (Edit This):**
-```
+
+```text
 plugins/Sword/config.yaml
 ```
 
 **Default Template (Don't Edit):**
-```
+
+```text
 src/main/resources/config.yaml (inside the plugin JAR)
 ```
 
@@ -631,5 +633,7 @@ timing:
 
 - [Command Reference](commands.md) - How to use `/sword reload`
 - [config.yaml](../../src/main/resources/config.yaml) - Full configuration file with detailed comments
-- [Issue #66](https://github.com/Mere-Solace/Sword-Combat-Plugin/issues/66) - Configuration system design
+- [Issue #66](https://github.com/Mere-Solace/Sword-Combat-Plugin/issues/66) - Original configuration system
+- [Issue #116](https://github.com/Mere-Solace/Sword-Combat-Plugin/issues/116) - Static config architecture
+- [ADR 005: Static Configuration Class](../decisions/005-static-configuration-class.md) - Technical architecture
 - [ConfigManager.java](../../src/main/java/btm/sword/config/ConfigManager.java) - Configuration implementation

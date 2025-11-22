@@ -6,14 +6,13 @@ import org.apache.logging.log4j.util.TriConsumer;
 import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
 
-import btm.sword.config.ConfigManager;
+import btm.sword.config.Config;
 import btm.sword.system.attack.Attack;
 import btm.sword.system.attack.AttackType;
 import btm.sword.system.entity.types.Combatant;
 import btm.sword.system.entity.types.SwordPlayer;
 import btm.sword.system.entity.umbral.input.BladeRequest;
 import btm.sword.system.item.KeyRegistry;
-import btm.sword.util.Prefab;
 
 /**
  * Provides attack-related actions for {@link Combatant} entities.
@@ -44,14 +43,14 @@ public class AttackAction extends SwordAction {
         ItemStack itemStack = executor.getItemStackInHand(true);
         Material itemType = itemStack.getType();
 
-        // TODO: todo link from the umbral Blade todo in input execution tree.
+        // TODO: #122 - Link from the umbral Blade todo in input execution tree
         // handle potential umbral blade usage
         if (KeyRegistry.hasKey(itemStack, KeyRegistry.SOUL_LINK_KEY) &&
                 executor.getUmbralBlade() != null) {
             executor.requestUmbralBladeState(BladeRequest.ATTACK_QUICK);
         }
 
-        double dot = executor.entity().getEyeLocation().getDirection().dot(Prefab.Direction.UP());
+        double dot = executor.entity().getEyeLocation().getDirection().dot(Config.Direction.UP());
 
         if (executor.isGrounded()) {
             for (var entry : attackMap.entrySet()) {
@@ -65,7 +64,7 @@ public class AttackAction extends SwordAction {
             ((SwordPlayer) executor).resetTree(); // can't combo aerials
 
             AttackType attackType = AttackType.N_AIR;
-            double downAirThreshold = ConfigManager.getInstance().getCombat().getAttacks().getDownAirThreshold();
+            double downAirThreshold = btm.sword.config.Config.Combat.ATTACKS_DOWN_AIR_THRESHOLD;
             if (dot < downAirThreshold) attackType = AttackType.D_AIR;
 
             for (var entry : attackMap.entrySet()) {

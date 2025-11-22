@@ -2,8 +2,6 @@ package btm.sword.system.entity.base;
 
 import java.util.HashMap;
 
-import btm.sword.config.ConfigManager;
-import btm.sword.config.section.EntityConfig;
 import btm.sword.system.attack.Attack;
 import btm.sword.system.entity.aspect.AspectType;
 import btm.sword.system.entity.aspect.value.AspectValue;
@@ -107,36 +105,34 @@ public class CombatProfile {
 
         };
 
-        // Load combat profile values from config - direct field access (hybrid pattern)
-        EntityConfig.CombatProfileConfig config = ConfigManager.getInstance().getEntities().getCombatProfile();
-
+        // Load combat profile values from config - static field access
         for (AspectType stat : AspectType.values()) {
             switch (stat) {
                 case SHARDS -> stats.put(stat, new ResourceValue(
-                    config.getShardsCurrent(),
-                    config.getShardsRegenPeriod(),
-                    config.getShardsRegenAmount()
+                    btm.sword.config.Config.Entity.COMBAT_PROFILE_SHARDS_CURRENT,
+                    btm.sword.config.Config.Entity.COMBAT_PROFILE_SHARDS_REGEN_PERIOD,
+                    btm.sword.config.Config.Entity.COMBAT_PROFILE_SHARDS_REGEN_AMOUNT
                 ));
                 case TOUGHNESS -> stats.put(stat, new ResourceValue(
-                    config.getToughnessCurrent(),
-                    config.getToughnessRegenPeriod(),
-                    config.getToughnessRegenAmount()
+                    btm.sword.config.Config.Entity.COMBAT_PROFILE_TOUGHNESS_CURRENT,
+                    btm.sword.config.Config.Entity.COMBAT_PROFILE_TOUGHNESS_REGEN_PERIOD,
+                    btm.sword.config.Config.Entity.COMBAT_PROFILE_TOUGHNESS_REGEN_AMOUNT
                 ));
                 case SOULFIRE -> stats.put(stat, new ResourceValue(
-                    config.getSoulfireCurrent(),
-                    config.getSoulfireRegenPeriod(),
-                    config.getSoulfireRegenAmount()
+                    btm.sword.config.Config.Entity.COMBAT_PROFILE_SOULFIRE_CURRENT,
+                    btm.sword.config.Config.Entity.COMBAT_PROFILE_SOULFIRE_REGEN_PERIOD,
+                    btm.sword.config.Config.Entity.COMBAT_PROFILE_SOULFIRE_REGEN_AMOUNT
                 ));
                 case FORM -> stats.put(stat, new ResourceValue(
-                    config.getFormCurrent(),
-                    config.getFormRegenPeriod(),
-                    config.getFormRegenAmount()
+                    btm.sword.config.Config.Entity.COMBAT_PROFILE_FORM_CURRENT,
+                    btm.sword.config.Config.Entity.COMBAT_PROFILE_FORM_REGEN_PERIOD,
+                    btm.sword.config.Config.Entity.COMBAT_PROFILE_FORM_REGEN_AMOUNT
                 ));
                 default -> stats.put(stat, new AspectValue(1));
             }
         }
 
-        this.maxAirDodges = config.getMaxAirDodges();
+        this.maxAirDodges = btm.sword.config.Config.Entity.COMBAT_PROFILE_MAX_AIR_DODGES;
     }
 
     /**

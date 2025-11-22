@@ -31,7 +31,7 @@ Changes implemented:
 3. Keys are created once during enum initialization
 4. Replaced `getKey()` method with `key()` (interface requirement)
 5. Updated `SoundUtil.playSound()` to pass `SoundType` directly to `Sound.sound()`
-6. Updated `AudioConfig` to use `SoundType` instead of `org.bukkit.Sound`
+6. Updated `Config.Audio` to use `SoundType` instead of `org.bukkit.Sound` (see ADR 005)
 
 ## Reasoning
 
@@ -103,29 +103,33 @@ Sound sound = Sound.sound(type, Sound.Source.PLAYER, volume, pitch);
 - [x] Changed internal storage from String to Key
 - [x] Implemented `key()` method
 - [x] Updated `SoundUtil.playSound()` to use direct type passing
-- [x] Updated `AudioConfig` to use `SoundType` enum
+- [x] Updated `Config.Audio` to use `SoundType` enum (ADR 005 static pattern)
 - [x] Fixed `UtilityAction.soundTest()` to use `key()` method
 - [x] Verified no other usages of old `getKey()` pattern
-- [x] Tested sound playback (QA pending)
+- [x] Migrated to static Config pattern with supplier lambdas for hot-reload
+- [x] Tested sound playback
 
 ## References
 
 - [Adventure API Sound Documentation](https://docs.papermc.io/adventure/sound/)
 - [Adventure API Source - Sound.Type](https://github.com/KyoriPowered/adventure/blob/main/4/api/src/main/java/net/kyori/adventure/sound/Sound.java)
 - [Paper MC Adventure Integration](https://docs.papermc.io/paper/dev/api/adventure)
-- Related Issue: #66 (Eliminate hard-coded values)
-- Commits: 71b99e9 (Sound.Type implementation), [pending] (UtilityAction fix)
+- [ADR 005: Static Configuration Class](005-static-configuration-class.md) - Config architecture with supplier pattern
+- Related Issue: #66 (Eliminate hard-coded values), #116 (Static Config migration)
+- Commits: 71b99e9 (Sound.Type implementation)
 
 ## Prefab.Sounds Wrapper Pattern
 
 ### Additional Decision: SoundWrapper Object Pattern
 
-After implementing the Sound.Type interface, we identified that direct config access was verbose:
+After implementing the Sound.Type interface, we identified that direct config access was verbose. With the static Config pattern (ADR 005), we created `SoundWrapper` class to encapsulate sound playback with config values:
 
 ```java
-// Verbose pattern
-var attackSound = ConfigManager.getInstance().getAudio().getAttackSound();
-SoundUtil.playSound(executor.entity(), attackSound.getSound(), attackSound.getVolume(), attackSound.getPitch());
+// Without wrapper - verbose access
+SoundUtil.playSound(executor.entity(), Config.Audio.ATTACK_SOUND, Config.Audio.ATTACK_VOLUME, Config.Audio.ATTACK_PITCH);
+
+// With wrapper - clean prefab pattern
+Prefab.Sounds.ATTACK.play(executor.entity());
 ```
 
 **Decision:** Created `SoundWrapper` class and added `Prefab.Sounds` static objects, following the existing `Prefab.Particles` **object pattern** (not utility methods).
@@ -145,24 +149,37 @@ Prefab.Sounds.ATTACK.play(entity)  // object.method()
 ### Implementation
 
 ```java
-// SoundWrapper.java - similar to ParticleWrapper
+// SoundWrapper.java - hot-reload compatible with supplier pattern
 public class SoundWrapper {
-    private final Function<AudioConfig, AudioConfig.SoundConfig> configExtractor;
+    private final Supplier<SoundType> soundSupplier;
+    private final Supplier<Float> volumeSupplier;
+    private final Supplier<Float> pitchSupplier;
 
-    public SoundWrapper(Function<AudioConfig, AudioConfig.SoundConfig> configExtractor) {
-        this.configExtractor = configExtractor;
+    public SoundWrapper(Supplier<SoundType> soundSupplier,
+                        Supplier<Float> volumeSupplier,
+                        Supplier<Float> pitchSupplier) {
+        this.soundSupplier = soundSupplier;
+        this.volumeSupplier = volumeSupplier;
+        this.pitchSupplier = pitchSupplier;
     }
 
     public void play(LivingEntity entity) {
-        AudioConfig.SoundConfig sound = configExtractor.apply(ConfigManager.getInstance().getAudio());
-        SoundUtil.playSound(entity, sound.getSound(), sound.getVolume(), sound.getPitch());
+        SoundUtil.playSound(entity, soundSupplier.get(), volumeSupplier.get(), pitchSupplier.get());
     }
 }
 
-// Prefab.java - prefabricated sound objects
+// Prefab.java - prefabricated sound objects with Config suppliers
 public static class Sounds {
-    public static final SoundWrapper ATTACK = new SoundWrapper(audio -> audio.getAttackSound());
-    public static final SoundWrapper THROW = new SoundWrapper(audio -> audio.getThrowSound());
+    public static final SoundWrapper ATTACK = new SoundWrapper(
+        () -> Config.Audio.ATTACK_SOUND,
+        () -> Config.Audio.ATTACK_VOLUME,
+        () -> Config.Audio.ATTACK_PITCH
+    );
+    public static final SoundWrapper THROW = new SoundWrapper(
+        () -> Config.Audio.THROW_SOUND,
+        () -> Config.Audio.THROW_VOLUME,
+        () -> Config.Audio.THROW_PITCH
+    );
 }
 
 // Usage - matches Prefab.Particles pattern
@@ -174,10 +191,11 @@ Prefab.Sounds.THROW.play(thrower.entity());
 
 1. **Consistency**: Exactly matches existing `Prefab.Particles.TEST_SWING.display(l)` pattern
 2. **Prefabricated**: Objects created once at class load time
-3. **Hot-Reload Compatible**: Config accessed via lambda at play time, no caching
+3. **Hot-Reload Compatible**: Config accessed via supplier lambdas at play time (ADR 005 static pattern)
 4. **Maintainable**: Follows established ParticleWrapper/SoundWrapper architecture
 5. **Discoverable**: Same API surface as existing Prefab objects
 6. **Extensible**: Easy to add new sound types (e.g., `HIT`, `CLASH`, `GUARD`)
+7. **Type Safety**: Suppliers reference static Config fields directly with compile-time checking
 
 ### Files Created/Updated
 
@@ -188,6 +206,6 @@ Prefab.Sounds.THROW.play(thrower.entity());
 
 ## Notes
 
-This change is part of the broader configuration system overhaul (Issue #66) that migrated hardcoded values to a hot-reloadable configuration system. The sound system now properly integrates with the config infrastructure while also adhering to Adventure API best practices.
+This change is part of the broader configuration system overhaul (Issue #66, #116) that migrated hardcoded values to a hot-reloadable static configuration system (ADR 005). The sound system now properly integrates with the config infrastructure while also adhering to Adventure API best practices.
 
-The Prefab.Sounds wrapper provides developer-friendly API surface while maintaining full hot-reload capabilities and Adventure API compliance.
+The Prefab.Sounds wrapper provides developer-friendly API surface while maintaining full hot-reload capabilities (via supplier pattern) and Adventure API compliance. Config values are accessed at play time through lambdas, ensuring `/sword reload` updates take effect immediately.

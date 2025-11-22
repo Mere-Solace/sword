@@ -1,16 +1,16 @@
 package btm.sword.system.entity.umbral.statemachine.state;
 
 
-import org.bukkit.Color;
 import org.bukkit.Location;
 import org.bukkit.scheduler.BukkitTask;
 import org.bukkit.util.Vector;
 
+import btm.sword.config.Config;
 import btm.sword.system.entity.umbral.UmbralBlade;
 import btm.sword.system.entity.umbral.input.BladeRequest;
 import btm.sword.system.entity.umbral.statemachine.UmbralStateFacade;
 
-// TODO: while recalling or returning, allow for dashing to the blade.
+// TODO: #122 - While recalling or returning, allow for dashing to the blade
 public class ReturningState extends UmbralStateFacade {
     private Location previousBladeLocation;
     private int t = 0;
@@ -28,7 +28,7 @@ public class ReturningState extends UmbralStateFacade {
     @Override
     public void onEnter(UmbralBlade blade) {
         blade.getDisplay().setGlowing(true);
-        blade.getDisplay().setGlowColorOverride(Color.fromRGB(1, 1, 1));
+        blade.getDisplay().setGlowColorOverride(Config.SwordColor.UMBRAL_GLOW);
 
         previousBladeLocation = blade.getDisplay().getLocation();
         returnTask = blade.returnToWielderAndRequestState(BladeRequest.STANDBY);

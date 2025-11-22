@@ -13,7 +13,7 @@ import org.bukkit.entity.EntityType;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.util.Vector;
 
-import btm.sword.config.section.AudioConfig;
+import btm.sword.config.Config;
 import btm.sword.system.attack.Attack;
 import btm.sword.util.display.ParticleWrapper;
 import btm.sword.util.sound.SoundWrapper;
@@ -61,27 +61,6 @@ public class Prefab {
         public static final ParticleWrapper TOUGH_RECHARGE_2 = new ParticleWrapper(Particle.FLAME, 100, 0.5, 0.5, 0.5, 0.5);
     }
 
-    public static class Direction {
-        private static final Vector UP = new Vector(0, 1, 0);
-        public static Vector UP() { return UP.clone(); }
-
-        private static final Vector DOWN = new Vector(0, -1, 0);
-        public static Vector DOWN() { return DOWN.clone(); }
-
-        private static final Vector NORTH = new Vector(0, 0, -1);
-        public static Vector NORTH() { return NORTH.clone(); }
-
-        private static final Vector SOUTH = new Vector(0, 0, 1);
-        public static Vector SOUTH() { return SOUTH.clone(); }
-
-        private static final Vector OUT_UP = new Vector(0, 1, 1);
-        public static Vector OUT_UP() { return OUT_UP.clone(); }
-
-        private static final Vector OUT_DOWN = new Vector(0, -1, 1);
-
-        public static Vector OUT_DOWN() { return OUT_DOWN.clone(); }
-    }
-
     public static class Value {
         public static final int MILLISECONDS_PER_TICK = 50; // 1000/20 = 50
     }
@@ -95,7 +74,7 @@ public class Prefab {
          * </p>
          * 2nd in list: self/entity to be excluded
          */
-        public static final Predicate<List<Entity>> DEFAULT_HITBOX_FILTER = // TODO: Make more of these and use them.
+        public static final Predicate<List<Entity>> DEFAULT_HITBOX_FILTER = // TODO: #125 - Make more of these and use them
             checkAndSelf ->
                 checkAndSelf.size() == 2 &&
                 (checkAndSelf.getFirst() instanceof LivingEntity target) &&
@@ -125,7 +104,11 @@ public class Prefab {
          * Properties configured in config.yaml under audio.attack.
          * </p>
          */
-        public static final SoundWrapper ATTACK = new SoundWrapper(AudioConfig::getAttackSound);
+        public static final SoundWrapper ATTACK = new SoundWrapper(
+            () -> Config.Audio.ATTACK_SOUND,
+            () -> Config.Audio.ATTACK_VOLUME,
+            () -> Config.Audio.ATTACK_PITCH
+        );
 
         /**
          * Throw sound effect for thrown items.
@@ -134,6 +117,10 @@ public class Prefab {
          * Properties configured in config.yaml under audio.throw.
          * </p>
          */
-        public static final SoundWrapper THROW = new SoundWrapper(AudioConfig::getThrowSound);
+        public static final SoundWrapper THROW = new SoundWrapper(
+            () -> Config.Audio.THROW_SOUND,
+            () -> Config.Audio.THROW_VOLUME,
+            () -> Config.Audio.THROW_PITCH
+        );
     }
 }

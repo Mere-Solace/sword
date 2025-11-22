@@ -10,60 +10,26 @@ import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 
 import btm.sword.Sword;
-import btm.sword.config.section.AudioConfig;
-import btm.sword.config.section.CombatConfig;
-import btm.sword.config.section.DebugConfig;
-import btm.sword.config.section.DetectionConfig;
-import btm.sword.config.section.DisplayConfig;
-import btm.sword.config.section.EntityConfig;
-import btm.sword.config.section.MovementConfig;
-import btm.sword.config.section.PhysicsConfig;
-import btm.sword.config.section.TimingConfig;
-import btm.sword.config.section.WorldConfig;
-import lombok.Getter;
 
 /**
  * Centralized configuration manager for Sword: Combat Evolved.
  * <p>
- * Provides type-safe access to all configuration values with hot-reload capabilities.
- * Values can be updated at runtime using {@code /sword reload} without server restart.
+ * Loads configuration values from config.yaml into the static {@link Config} class.
+ * Provides hot-reload capabilities via {@code /sword reload} without server restart.
  * </p>
  * <p>
  * Thread-safe singleton pattern ensures consistent access across the plugin.
+ * Uses generic loading methods to minimize boilerplate and improve maintainability.
  * </p>
  *
- * @see <a href="https://github.com/Mere-Solace/Sword-Combat-Plugin/issues/66">Issue #66</a>
+ * @see <a href="https://github.com/Mere-Solace/Sword-Combat-Plugin/issues/116">Issue #116</a>
  */
 public final class ConfigManager {
     private static ConfigManager instance;
 
-    @Getter
     private final Sword plugin;
-
     private File configFile;
     private FileConfiguration config;
-
-    // Section accessors for type-safe config access
-    @Getter
-    private PhysicsConfig physics;
-    @Getter
-    private CombatConfig combat;
-    @Getter
-    private DisplayConfig display;
-    @Getter
-    private DetectionConfig detection;
-    @Getter
-    private TimingConfig timing;
-    @Getter
-    private AudioConfig audio;
-    @Getter
-    private EntityConfig entities;
-    @Getter
-    private MovementConfig movement;
-    @Getter
-    private WorldConfig world;
-    @Getter
-    private DebugConfig debug;
 
     /**
      * Private constructor for singleton pattern.
@@ -129,10 +95,11 @@ public final class ConfigManager {
     }
 
     /**
-     * Loads (or reloads) the configuration from disk.
+     * Loads (or reloads) the configuration from disk into static Config class.
      * <p>
      * This method can be called at runtime to hot-reload configuration changes.
-     * All cached section objects are recreated with new values.
+     * All static fields in Config are updated with new values from disk.
+     * Uses the new ConfigEntry registration system to automatically load all fields.
      * </p>
      *
      * @return true if reload was successful, false if errors occurred
@@ -141,17 +108,10 @@ public final class ConfigManager {
         try {
             config = YamlConfiguration.loadConfiguration(configFile);
 
-            // Reload all section accessors
-            physics = new PhysicsConfig(config);
-            combat = new CombatConfig(config);
-            display = new DisplayConfig(config);
-            detection = new DetectionConfig(config);
-            timing = new TimingConfig(config);
-            audio = new AudioConfig(config);
-            entities = new EntityConfig(config);
-            movement = new MovementConfig(config);
-            world = new WorldConfig(config);
-            debug = new DebugConfig(config);
+            // Load all configuration entries using the registration system
+            for (Config.ConfigEntry<?> entry : Config.ENTRIES) {
+                loadEntry(entry);
+            }
 
             return true;
         } catch (Exception e) {
@@ -159,6 +119,28 @@ public final class ConfigManager {
             return false;
         }
     }
+
+    /**
+     * Loads a single ConfigEntry from the YAML configuration.
+     * <p>
+     * Uses the entry's custom loader and assignment lambda to read from YAML
+     * and update the corresponding static field in Config.
+     * </p>
+     *
+     * @param entry The ConfigEntry to load
+     * @param <T> The type of the config value
+     */
+    private <T> void loadEntry(Config.ConfigEntry<T> entry) {
+        try {
+            T value = entry.loader.load(config, entry.path, entry.defaultValue);
+            entry.assign.accept(value);
+        } catch (Exception e) {
+            plugin.getLogger().log(Level.WARNING,
+                "Failed to load config entry '" + entry.path + "', using default: " + entry.defaultValue, e);
+            entry.assign.accept(entry.defaultValue);
+        }
+    }
+
 
     /**
      * Reloads the configuration from disk (hot reload).
@@ -180,8 +162,9 @@ public final class ConfigManager {
     /**
      * Saves the current configuration to disk.
      * <p>
-     * Note: This saves the in-memory config state, not the section objects.
-     * Typically used after programmatic config modifications.
+     * Note: This saves the in-memory config state from the YAML file.
+     * To persist changes made to static Config fields, they must first
+     * be written back to the config object.
      * </p>
      */
     public void saveConfig() {
@@ -191,18 +174,6 @@ public final class ConfigManager {
         } catch (IOException e) {
             plugin.getLogger().log(Level.SEVERE, "Failed to save config.yaml", e);
         }
-    }
-
-    /**
-     * Gets the raw Bukkit FileConfiguration object.
-     * <p>
-     * For advanced use cases. Prefer using typed section accessors when possible.
-     * </p>
-     *
-     * @return The underlying FileConfiguration
-     */
-    public FileConfiguration getRawConfig() {
-        return config;
     }
 
     /**

@@ -1,6 +1,5 @@
 package btm.sword.util.display;
 
-import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
@@ -13,7 +12,7 @@ import org.bukkit.scheduler.BukkitTask;
 import org.bukkit.util.Vector;
 
 import btm.sword.Sword;
-import btm.sword.config.ConfigManager;
+import btm.sword.config.Config;
 import btm.sword.system.entity.base.SwordEntity;
 import btm.sword.util.Prefab;
 
@@ -32,7 +31,7 @@ public class DisplayUtil {
      * @param display the {@link Display} to teleport smoothly
      */
     public static void smoothTeleport(Display display) {
-        display.setTeleportDuration(ConfigManager.getInstance().getDisplay().getDefaultTeleportDuration());
+        display.setTeleportDuration(Config.Display.DEFAULT_TELEPORT_DURATION);
     }
 
     /**
@@ -118,10 +117,9 @@ public class DisplayUtil {
     public static <T> void itemDisplayFollow(SwordEntity entity, ItemDisplay itemDisplay, Vector direction, double heightOffset, boolean followHead,
                                              Predicate<T> condition, T toTest, Consumer<T> callback, T toConsume) {
         double originalYaw = Math.toRadians(entity.entity().getBodyYaw());
-        Vector offset = Prefab.Direction.UP().multiply(heightOffset);
+        Vector offset = Config.Direction.UP().multiply(heightOffset);
 
-        var displayFollow = ConfigManager.getInstance().getDisplay().getItemDisplayFollow();
-        itemDisplay.setBillboard(displayFollow.getBillboardMode());
+        itemDisplay.setBillboard(Config.Display.ITEM_DISPLAY_FOLLOW_BILLBOARD_MODE);
         entity.entity().addPassenger(itemDisplay);
 
         new BukkitRunnable() {
@@ -133,8 +131,6 @@ public class DisplayUtil {
                 }
 
                 if (condition != null && toTest != null && condition.test(toTest)) {
-                    // TODO: remove
-                    Objects.requireNonNull(Bukkit.getPlayer("BladeSworn")).sendMessage("Condition satisfied, no longer in Lodged state");
                     if (callback != null && toConsume != null) callback.accept(toConsume);
                     cancel();
                 }
@@ -145,15 +141,15 @@ public class DisplayUtil {
                 Vector curDir = direction.clone().rotateAroundY(originalYaw-yawRads);
                 l.setDirection(curDir);
 
-                DisplayUtil.smoothTeleport(itemDisplay, displayFollow.getUpdateInterval());
+                DisplayUtil.smoothTeleport(itemDisplay, Config.Display.ITEM_DISPLAY_FOLLOW_UPDATE_INTERVAL);
                 itemDisplay.teleport(l);
 
-                if (step % displayFollow.getParticleInterval() == 0)
+                if (step % Config.Display.ITEM_DISPLAY_FOLLOW_PARTICLE_INTERVAL == 0)
                     Prefab.Particles.BLEED.display(l);
 
                 step++;
             }
-        }.runTaskTimer(Sword.getInstance(), 0L, displayFollow.getUpdateInterval());
+        }.runTaskTimer(Sword.getInstance(), 0L, Config.Display.ITEM_DISPLAY_FOLLOW_UPDATE_INTERVAL);
     }
 
     // x = right, y = up, z = forward

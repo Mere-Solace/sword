@@ -22,7 +22,8 @@ This guide walks you through setting up your development environment for Sword: 
 ### Option 1: Microsoft Build of OpenJDK (Recommended for Windows)
 
 1. **Download** the installer:
-   ```
+
+   ```text
    https://learn.microsoft.com/en-us/java/openjdk/download
    ```
 

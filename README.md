@@ -89,7 +89,7 @@ Note: *Must be holding a shield in offhand for right clicking functionality*
 
 ### Project Structure
 
-```
+```text
 src/main/java/btm/sword/
 ├── commands/         # Command handlers
 ├── listeners/        # Event listeners
@@ -137,17 +137,18 @@ open build/reports/tests/test/index.html
 The project uses multiple linters and quality tools:
 
 - **Checkstyle**: Style and conventions
-- **PMD**: Bug detection
 - **Spotless**: Auto-formatting (Java + Markdown)
+- **Markdownlint**: Markdown documentation quality
 
-See [docs/development/LINTING.md](docs/development/LINTING.md) for details.
+See [docs/setup/automation-tools.md](docs/setup/automation-tools.md) and [docs/setup/github-actions-guide.md](docs/setup/github-actions-guide.md) for details.
 
 ### Documentation
 
-- **[Testing Guide](docs/development/TESTING.md)**: How to write and run tests
-- **[Linting Guide](docs/development/LINTING.md)**: Code quality tools and usage
+- **[Automation Tools Guide](docs/setup/automation-tools.md)**: Quality tools and local usage
+- **[GitHub Actions Guide](docs/setup/github-actions-guide.md)**: CI/CD pipeline and automated checks
 - **[Contributing](CONTRIBUTING.md)**: Contribution guidelines
 - **[Documentation Standards](docs/standards/documentation-standards.md)**: Javadoc guidelines
+- **[Development Environment Setup](docs/setup/development-environment.md)**: Java 21 and IDE configuration
 
 ## Architecture
 

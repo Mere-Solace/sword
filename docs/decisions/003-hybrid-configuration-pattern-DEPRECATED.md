@@ -1,7 +1,16 @@
-# ADR 003: Hybrid Configuration Pattern
+# ADR 003: Hybrid Configuration Pattern [DEPRECATED]
 
-**Status**: Accepted
+> **⚠️ This ADR is superseded by [ADR 005: Static Configuration Class](005-static-configuration-class.md)**
+>
+> **Migration Date**: 2025-11-19
+>
+> **Reason**: The hybrid pattern still required too much boilerplate (3-5 lines per value). ADR 005 introduces a static config class that reduces this to 1-2 lines per value with better IDE support and clearer access patterns.
+>
+> **This document is kept for historical reference only.**
+
+**Status**: ~~Accepted~~ **Superseded by ADR 005**
 **Date**: 2025-11-03
+**Superseded**: 2025-11-19
 **Authors**: Mere Solace
 
 ## Context

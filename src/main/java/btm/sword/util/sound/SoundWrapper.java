@@ -1,11 +1,9 @@
 package btm.sword.util.sound;
 
-import java.util.function.Function;
+import java.util.function.Supplier;
 
 import org.bukkit.entity.LivingEntity;
 
-import btm.sword.config.ConfigManager;
-import btm.sword.config.section.AudioConfig;
 
 /**
  * Wrapper class for handling sound effects with configuration system integration.
@@ -20,20 +18,28 @@ import btm.sword.config.section.AudioConfig;
  * </p>
  */
 public class SoundWrapper {
-    /** Function to extract the sound configuration from AudioConfig */
-    private final Function<AudioConfig, AudioConfig.SoundConfig> configExtractor;
+    /** Supplier to get the sound type from Config */
+    private final Supplier<SoundType> soundSupplier;
+    /** Supplier to get the volume from Config */
+    private final Supplier<Float> volumeSupplier;
+    /** Supplier to get the pitch from Config */
+    private final Supplier<Float> pitchSupplier;
 
     /**
-     * Constructs a SoundWrapper with a configuration extractor function.
+     * Constructs a SoundWrapper with configuration suppliers.
      * <p>
-     * The extractor function is called each time {@link #play(LivingEntity)} is invoked,
+     * The suppliers are called each time {@link #play(LivingEntity)} is invoked,
      * ensuring hot-reload compatibility by fetching fresh config values.
      * </p>
      *
-     * @param configExtractor function that extracts the desired sound config from AudioConfig
+     * @param soundSupplier supplier that provides the sound type from Config
+     * @param volumeSupplier supplier that provides the volume from Config
+     * @param pitchSupplier supplier that provides the pitch from Config
      */
-    public SoundWrapper(Function<AudioConfig, AudioConfig.SoundConfig> configExtractor) {
-        this.configExtractor = configExtractor;
+    public SoundWrapper(Supplier<SoundType> soundSupplier, Supplier<Float> volumeSupplier, Supplier<Float> pitchSupplier) {
+        this.soundSupplier = soundSupplier;
+        this.volumeSupplier = volumeSupplier;
+        this.pitchSupplier = pitchSupplier;
     }
 
     /**
@@ -46,7 +52,6 @@ public class SoundWrapper {
      * @param entity the entity to play the sound at
      */
     public void play(LivingEntity entity) {
-        AudioConfig.SoundConfig sound = configExtractor.apply(ConfigManager.getInstance().getAudio());
-        SoundUtil.playSound(entity, sound.getSound(), sound.getVolume(), sound.getPitch());
+        SoundUtil.playSound(entity, soundSupplier.get(), volumeSupplier.get(), pitchSupplier.get());
     }
 }

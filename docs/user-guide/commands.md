@@ -20,7 +20,8 @@ This guide covers all available commands in Sword: Combat Evolved.
 Displays basic plugin information and available commands.
 
 **Example:**
-```
+
+```text
 /sword
 > Sword: Combat Evolved
 > Usage: /sword reload
@@ -39,7 +40,8 @@ Hot-reloads the plugin configuration from `config.yaml` without requiring a serv
 - Adjusting physics parameters without downtime
 
 **Success Output:**
-```
+
+```text
 /sword reload
 > Reloading Sword: Combat Evolved configuration...
 > ✓ Configuration reloaded successfully!
@@ -47,7 +49,8 @@ Hot-reloads the plugin configuration from `config.yaml` without requiring a serv
 ```
 
 **Failure Output:**
-```
+
+```text
 /sword reload
 > Reloading Sword: Combat Evolved configuration...
 > ✗ Configuration reload failed!
@@ -55,7 +58,8 @@ Hot-reloads the plugin configuration from `config.yaml` without requiring a serv
 ```
 
 **Permission Denied:**
-```
+
+```text
 /sword reload
 > You don't have permission to reload the config.
 ```

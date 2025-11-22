@@ -156,7 +156,6 @@ public class SwordPlayer extends Combatant {
     public void onSpawn() {
         super.onSpawn();
         player().getInventory().setItem(8, menuButton);
-        updateVisualStats();
     }
 
     /**
@@ -497,7 +496,7 @@ public class SwordPlayer extends Combatant {
         holdingRight = true;
         rightHoldTimeStart = System.currentTimeMillis();
 
-        // TODO: handle umbral blade holding
+        // TODO: #123 - Handle umbral blade holding
         mainItemStackAtTimeOfHold = getItemStackInHand(true);
         offItemStackAtTimeOfHold = getItemStackInHand(false);
 
@@ -507,7 +506,7 @@ public class SwordPlayer extends Combatant {
 
         indexOfRightHold = getCurrentInvIndex();
 
-        // TODO: This is where to implement catches for right clicking different items!!!
+        // TODO: #123 - This is where to implement catches for right clicking different items
 
         if (!mainItemStackAtTimeOfHold.isEmpty())
             setItemStackInHand(new ItemStack(Material.GUNPOWDER), true); // can change the logic here later

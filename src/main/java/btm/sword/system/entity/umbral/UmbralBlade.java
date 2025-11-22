@@ -22,7 +22,7 @@ import org.joml.Quaternionf;
 import org.joml.Vector3f;
 
 import btm.sword.Sword;
-import btm.sword.config.ConfigManager;
+import btm.sword.config.Config;
 import btm.sword.system.SwordScheduler;
 import btm.sword.system.action.utility.thrown.InteractiveItemArbiter;
 import btm.sword.system.action.utility.thrown.ThrownItem;
@@ -62,7 +62,6 @@ import btm.sword.util.math.VectorUtil;
 import lombok.Getter;
 import lombok.Setter;
 import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.format.TextColor;
 import net.kyori.adventure.text.format.TextDecoration;
 
 // while flying and attacking on its own, no soulfire is reaped on attacks
@@ -295,7 +294,7 @@ public class UmbralBlade extends ThrownItem {
             blade -> isRequestedAndActive(BladeRequest.STANDBY),
             blade -> {}
         ));
-        // TODO: may time out sometimes upon returning to the player. Make a check for this and a time-out feature.
+        // TODO: #122 - May time out sometimes upon returning to the player. Make a check for this and a time-out feature
         bladeStateMachine.addTransition(new Transition<>(
             ReturningState.class,
             StandbyState.class,
@@ -306,7 +305,7 @@ public class UmbralBlade extends ThrownItem {
         bladeStateMachine.addTransition(new Transition<>(
             ReturningState.class,
             LungingState.class,
-            blade -> isRequestedAndActive(BladeRequest.LUNGE), // TODO: test this
+            blade -> isRequestedAndActive(BladeRequest.LUNGE), // TODO: #122 - Test this transition
             blade -> {}
         ));
 
@@ -402,7 +401,7 @@ public class UmbralBlade extends ThrownItem {
 
     public void onTick() {
         if (thrower.isInvalid()) {
-            thrower.message("Ending Umbral Blade");
+//            thrower.message("Ending Umbral Blade");
             dispose();
         }
 
@@ -410,15 +409,15 @@ public class UmbralBlade extends ThrownItem {
             bladeStateMachine.tick();
     }
 
-    // TODO: make a method for calculating correct orientation of blade for edge to align with plane of swing on attack
-    // TODO: Make transitions smooth af and slow with arcs and such and interpolation
+    // TODO: #121 - Make a method for calculating correct orientation of blade for edge to align with plane of swing on attack
+    // TODO: #121 - Make transitions smooth af and slow with arcs and such and interpolation
     public void setDisplayTransformation(Class<? extends State<UmbralBlade>> state) {
         if (display == null) return;
 
         new BukkitRunnable() {
             @Override
             public void run() {
-                DisplayUtil.setInterpolationValues(display, 0, 2); // TODO: make duration dynamic
+                DisplayUtil.setInterpolationValues(display, 0, 2); // TODO: #119 - Make duration dynamic
                 display.setTransformation(getStateDisplayTransformation(state));
             }
         }.runTaskLater(Sword.getInstance(), 1L);
@@ -532,7 +531,7 @@ public class UmbralBlade extends ThrownItem {
         }
     }
 
-    // TODO: Make item Display changes look less jerky
+    // TODO: #121 - Make item Display changes look less jerky
 
     public BukkitTask returnToWielderAndRequestState(BladeRequest request) {
         return DisplayUtil.displaySlerpToOffset(thrower, display,
@@ -564,7 +563,7 @@ public class UmbralBlade extends ThrownItem {
             attackOrigin = target.getChestLocation().clone()
                 .subtract(to).setDirection(to.normalize());
 
-            thrower.message("Targeted this guy: " + target.getDisplayName());
+//            thrower.message("Targeted this guy: " + target.getDisplayName());
         }
 
         attack = heavy ? heavyAttacks[0].apply(thrower) : basicAttacks[0].apply(thrower); // TODO dynamic.
@@ -584,7 +583,7 @@ public class UmbralBlade extends ThrownItem {
     private void loadBasicAttacks() {
         // load from config or registry later
         basicAttacks = new Function[]{
-            // TODO: fix how display step and attack steps work, confusing and incorrect rn
+            // TODO: #120 - Fix how display step and attack steps work, confusing and incorrect rn
             combatant -> new UmbralBladeAttack(display, AttackType.WIDE_UMBRAL_SLASH1_WINDUP,
                 true, true, 1,
                 10, 30, 500,
@@ -612,23 +611,23 @@ public class UmbralBlade extends ThrownItem {
     private void generateUmbralItems() {
         // item Stack used for determining umbral blade inputs
         this.link = new ItemStackBuilder(Material.HEAVY_CORE)
-            .name(Component.text("~ ", TextColor.color(160, 17, 17))
+            .name(Component.text("~ ", Config.SwordColor.TEXT_ITEM_NAME)
                 .append(Component.text(thrower.getDisplayName() + "'s Soul Link",
-                    TextColor.color(204, 0, 0), TextDecoration.BOLD))
-                .append(Component.text(" ~", TextColor.color(160, 17, 17))))
+                    Config.SwordColor.TEXT_ITEM_NAME, TextDecoration.BOLD))
+                .append(Component.text(" ~", Config.SwordColor.TEXT_ITEM_NAME)))
             .lore(List.of(
                 Component.text(""),
-                Component.text("Controls:", TextColor.color(200, 200, 200), TextDecoration.ITALIC),
-                Component.text("Drop + Swap", TextColor.color(255, 100, 100))
-                    .append(Component.text(" - Toggle Standby/Sheathed", TextColor.color(150, 150, 150))),
-                Component.text("  • Standby: ", TextColor.color(180, 180, 180))
-                    .append(Component.text("Blade hovers, ready to attack", TextColor.color(120, 120, 120))),
-                Component.text("  • Sheathed: ", TextColor.color(180, 180, 180))
-                    .append(Component.text("Blade stored on back", TextColor.color(120, 120, 120))),
+                Component.text("Controls:", Config.SwordColor.TEXT_ITEM_HEADER, TextDecoration.ITALIC),
+                Component.text("Drop + Swap", Config.SwordColor.TEXT_ITEM_CONTROLS)
+                    .append(Component.text(" - Toggle Standby/Sheathed", Config.SwordColor.TEXT_ITEM_BASE)),
+                Component.text("  • Standby: ", Config.SwordColor.TEXT_ITEM_HEADER)
+                    .append(Component.text("Blade hovers, ready to attack", Config.SwordColor.TEXT_ITEM_BASE)),
+                Component.text("  • Sheathed: ", Config.SwordColor.TEXT_ITEM_HEADER)
+                    .append(Component.text("Blade stored in sheath on hip", Config.SwordColor.TEXT_ITEM_BASE)),
                 Component.text(""),
-                Component.text("Swap + Left Click", TextColor.color(255, 100, 100))
-                    .append(Component.text(" - Wield Blade", TextColor.color(150, 150, 150))),
-                Component.text("  • Equip as weapon in hand", TextColor.color(120, 120, 120))
+                Component.text("Swap + Left Click", Config.SwordColor.TEXT_ITEM_CONTROLS)
+                    .append(Component.text(" - Wield Blade", Config.SwordColor.TEXT_ITEM_HEADER)),
+                Component.text("  • Equip as weapon in hand", Config.SwordColor.TEXT_ITEM_HEADER)
             ))
             .unbreakable(true)
             .tag(KeyRegistry.SOUL_LINK_KEY, thrower.getUniqueId().toString())
@@ -636,27 +635,22 @@ public class UmbralBlade extends ThrownItem {
             .build();
 
         this.blade = new ItemStackBuilder(weapon.getType())
-            .name(Component.text("~ ", TextColor.color(51, 60, 75))
+            .name(Component.text("~ ", Config.SwordColor.TEXT_COOL_DARK)
                 .append(Component.text(thrower.getDisplayName() + "'s Blade",
-                    TextColor.color(240, 156, 40), TextDecoration.BOLD))
-                .append(Component.text(" ~", TextColor.color(51, 60, 75))))
+                    Config.SwordColor.TEXT_COOL, TextDecoration.BOLD))
+                .append(Component.text(" ~", Config.SwordColor.TEXT_COOL_DARK)))
             .lore(List.of(
                 Component.text(""),
-                Component.text("Wielded Form", TextColor.color(200, 200, 200), TextDecoration.ITALIC),
-                Component.text("Use normal combat inputs", TextColor.color(150, 150, 150)),
+                Component.text("Wielded Form", Config.SwordColor.TEXT_ITEM_HEADER, TextDecoration.ITALIC),
+                Component.text("Use normal combat inputs", Config.SwordColor.TEXT_ITEM_BASE),
                 Component.text(""),
-                Component.text("Q + F", TextColor.color(255, 100, 100))
-                    .append(Component.text(" - Return to Standby", TextColor.color(150, 150, 150)))
+                Component.text("Q + F", Config.SwordColor.TEXT_ITEM_CONTROLS)
+                    .append(Component.text(" - Return to Standby", Config.SwordColor.TEXT_ITEM_BASE))
             ))
             .unbreakable(true)
             .tag(KeyRegistry.SOUL_LINK_KEY, thrower.getUniqueId().toString())
             .hideAll()
             .build();
-    }
-
-    public void removeWeaponDisplay() {
-        if (display != null)
-            display.remove();
     }
 
     public void resetWeaponDisplay() {
@@ -706,7 +700,7 @@ public class UmbralBlade extends ThrownItem {
 
     public void onGrab(Combatant combatant) {
         if (combatant.getUniqueId() != thrower.getUniqueId()) {
-            // TODO: rejection logic or smth
+            // TODO: #122 - Add rejection logic for non-thrower grabs
             return;
         }
 
@@ -728,9 +722,8 @@ public class UmbralBlade extends ThrownItem {
 
         double heightOffset = Math.max(0, Math.min(cur.getY() - feet, hit.getHeight()));
 
-        var impalementConfig = ConfigManager.getInstance().getCombat().getImpalement();
-        boolean followHead = !impalementConfig.getHeadFollowExceptions().contains(hitEntity.entity().getType())
-            && heightOffset >= diff * impalementConfig.getHeadZoneRatio();
+        boolean followHead = !Config.Combat.IMPALEMENT_HEAD_FOLLOW_EXCEPTIONS.contains(hitEntity.entity().getType())
+            && heightOffset >= diff * Config.Combat.IMPALEMENT_HEAD_ZONE_RATIO;
         DisplayUtil.itemDisplayFollow(hitEntity, display,  velocity.clone().normalize(), heightOffset, followHead,
             blade -> !inState(LodgedState.class), this, null, null);
     }

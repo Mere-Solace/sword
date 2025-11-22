@@ -7,7 +7,7 @@ import btm.sword.system.entity.umbral.statemachine.state.LodgedState;
 import btm.sword.system.entity.umbral.statemachine.state.WieldState;
 
 public class UmbralBladeAction extends SwordAction {
-    // TODO: Wielding when not holding blade should attack
+    // TODO: #122 - Wielding when not holding blade should attack
     public static void wield(Combatant wielder) {
         UmbralBlade blade = wielder.getUmbralBlade();
         if (blade == null) return;

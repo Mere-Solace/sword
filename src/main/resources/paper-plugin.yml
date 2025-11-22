@@ -1,4 +1,4 @@
-name: sword
+name: Sword
 version: '${version}'
 main: btm.sword.Sword
 api-version: '1.21.8'
