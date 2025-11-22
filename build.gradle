@@ -37,6 +37,8 @@ dependencies {
 }
 
 tasks.jar {
+    archiveBaseName.set("Sword")
+    archiveVersion.set("1.0-SNAPSHOT") // TODO: make dynamic... not sure why the old build isn't working
     duplicatesStrategy = DuplicatesStrategy.INCLUDE
 }
 
