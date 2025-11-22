@@ -1,5 +1,7 @@
 package btm.sword.system.attack;
 
+import btm.sword.system.entity.umbral.statemachine.state.AttackingHeavyState;
+
 import org.bukkit.entity.ItemDisplay;
 
 import btm.sword.system.entity.umbral.UmbralBlade;
@@ -26,6 +28,6 @@ public class UmbralBladeAttack extends ItemDisplayAttack {
     protected void drawAttackEffects() {
         super.drawAttackEffects();
 
-        blade.getDisplay().setTransformation(blade.getStateDisplayTransformation(AttackingQuickState.class));
+//        blade.getDisplay().setTransformation(blade.getStateDisplayTransformation(AttackingHeavyState.class));
     }
 }
