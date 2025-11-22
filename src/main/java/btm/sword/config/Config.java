@@ -297,7 +297,7 @@ public class Config {
             Config::loadTextColor
         ); }
 
-        public static Color UMBRAL_GLOW = Color.fromRGB(50, 50, 50);
+        public static Color UMBRAL_GLOW = Color.fromRGB(255, 255, 255);
         static { register("color.umbral_glow",
             UMBRAL_GLOW, Color.class,
             v -> UMBRAL_GLOW = v,

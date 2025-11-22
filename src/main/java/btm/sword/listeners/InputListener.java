@@ -28,7 +28,7 @@ import io.papermc.paper.event.player.PrePlayerAttackEntityEvent;
  * system for unified input handling and action evaluation.
  * <p>
  * This listener captures and interprets a wide range of Minecraft input actions —
- * including attacks, right-clicks, drops, swaps, and sneaking — and delegates
+ * including attacks, start-clicks, drops, swaps, and sneaking — and delegates
  * them to the internal {@link InputType}-based system used by the Sword plugin.
  * </p>
  */
@@ -60,10 +60,10 @@ public class InputListener implements Listener {
     }
 
     /**
-     * Handles general player interaction events (left and right clicks).
+     * Handles general player interaction events (left and start clicks).
      * <p>
      * This includes both air and block interactions. The system distinguishes between
-     * left and right inputs, checks for contextual blocking (e.g., interacting with blocks),
+     * left and start inputs, checks for contextual blocking (e.g., interacting with blocks),
      * and routes actions through the {@link SwordPlayer#act(InputType)} pipeline.
      * </p>
      *
@@ -109,14 +109,14 @@ public class InputListener implements Listener {
     }
 
     /**
-     * Handles interactions directly targeting entities (right-clicking them).
+     * Handles interactions directly targeting entities (start-clicking them).
      * <p>
      * Marks the player as currently interacting with an entity to prevent duplicate
-     * actions and ensures right-clicks are correctly registered as {@link InputType#RIGHT}.
+     * actions and ensures start-clicks are correctly registered as {@link InputType#RIGHT}.
      * The flag resets one tick later via a scheduled task.
      * </p>
      *
-     * @param event the {@link PlayerInteractEntityEvent} triggered when a player right-clicks an entity
+     * @param event the {@link PlayerInteractEntityEvent} triggered when a player start-clicks an entity
      */
     @EventHandler
     public void onPlayerEntityInteract(PlayerInteractEntityEvent event) {

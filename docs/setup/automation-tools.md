@@ -40,7 +40,7 @@ This command will:
 - Remove all unused imports
 - Fix indentation
 - Organize imports
-- Clean up whitespace
+- Clean c1 whitespace
 
 **Check formatting without fixing:**
 ```bash

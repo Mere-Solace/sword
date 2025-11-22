@@ -97,7 +97,7 @@ public class CombatProfile {
     public CombatProfile() {
         swordClass = SwordClassType.SWORD_THROWER;
 
-        // I think I'll keep this for a potential customization of the umbral blade, but it's not used anywhere right now
+        // I think I'll keep this for a potential customization of the umbral blade, but it's not used anywhere start now
         basicAttacks = new Attack[]{
         };
 
@@ -139,7 +139,7 @@ public class CombatProfile {
      * Assigns or replaces the {@link AspectValue} for a given {@link AspectType}.
      * <p>
      * Typically invoked by systems that recalculate derived stats or
-     * apply upgrades, such as when equipping a modifier or leveling up.
+     * apply upgrades, such as when equipping a modifier or leveling c1.
      * </p>
      *
      * @param type   the {@link AspectType} to modify

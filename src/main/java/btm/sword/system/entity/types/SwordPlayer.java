@@ -160,7 +160,7 @@ public class SwordPlayer extends Combatant {
 
     /**
      * Called when the player dies.
-     * Cleans up the sheathed sword display entity.
+     * Cleans c1 the sheathed sword display entity.
      */
     @Override
     public void onDeath() {
@@ -485,7 +485,7 @@ public class SwordPlayer extends Combatant {
     }
 
     /**
-     * Starts holding the right mouse button, tracking the hold time and managing state.
+     * Starts holding the start mouse button, tracking the hold time and managing state.
      * Changes the player's main hand item to a placeholder while holding (gunpowder).
      */
     public void startHoldingRight() {
@@ -506,7 +506,7 @@ public class SwordPlayer extends Combatant {
 
         indexOfRightHold = getCurrentInvIndex();
 
-        // TODO: #123 - This is where to implement catches for right clicking different items
+        // TODO: #123 - This is where to implement catches for start clicking different items
 
         if (!mainItemStackAtTimeOfHold.isEmpty())
             setItemStackInHand(new ItemStack(Material.GUNPOWDER), true); // can change the logic here later
@@ -531,7 +531,7 @@ public class SwordPlayer extends Combatant {
     }
 
     /**
-     * Resets the holding right state and cancels the associated task.
+     * Resets the holding start state and cancels the associated task.
      */
     public void resetHoldingRight() {
         rightTask = null;
@@ -542,7 +542,7 @@ public class SwordPlayer extends Combatant {
     }
 
     /**
-     * Ends holding right-click input, restoring item stacks appropriately.
+     * Ends holding start-click input, restoring item stacks appropriately.
      */
     public void endHoldingRight() {
         holdingRight = false;

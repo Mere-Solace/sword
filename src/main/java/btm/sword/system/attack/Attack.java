@@ -1,7 +1,6 @@
 package btm.sword.system.attack;
 
 import java.util.HashSet;
-import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
@@ -28,6 +27,7 @@ import btm.sword.util.display.ParticleWrapper;
 import btm.sword.util.entity.HitboxUtil;
 import btm.sword.util.math.Basis;
 import btm.sword.util.math.BezierUtil;
+import btm.sword.util.math.ControlVectors;
 import btm.sword.util.math.VectorUtil;
 import lombok.Getter;
 import lombok.Setter;
@@ -39,12 +39,12 @@ public class Attack extends SwordAction implements Runnable {
     protected final AttackType attackType;
     protected final boolean orientWithPitch;
 
-    protected final List<Vector> controlVectors;
+    protected final ControlVectors controlVectors;
     protected Function<Double, Vector> weaponPathFunction;
 
     protected Vector curRight;
     protected Vector curUp; // Reserved for future vertical knockback calculations
-    protected Vector curForward; // Reserved for future forward knockback calculations
+    protected Vector curForward; // Reserved for future c2 knockback calculations
 
     @Setter // origin can be set for stationary attacks
     protected Location origin;
@@ -322,8 +322,8 @@ public class Attack extends SwordAction implements Runnable {
         curUp = basis.up();
         curForward = basis.forward();
 
-        List<Vector> adjusted = BezierUtil.adjustCtrlToBasis(basis, controlVectors, rangeMultiplier);
-        weaponPathFunction = BezierUtil.cubicBezier3D(adjusted.get(0), adjusted.get(1), adjusted.get(2), adjusted.get(3));
+        ControlVectors adjusted = controlVectors.adjustToBasis(basis, rangeMultiplier);
+        weaponPathFunction = BezierUtil.cubicBezier3D(adjusted);
     }
 
     public Vector getCur() {

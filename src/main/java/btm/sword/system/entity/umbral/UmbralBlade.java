@@ -58,6 +58,7 @@ import btm.sword.util.display.DisplayUtil;
 import btm.sword.util.display.DrawUtil;
 import btm.sword.util.display.ParticleWrapper;
 import btm.sword.util.math.BezierUtil;
+import btm.sword.util.math.ControlVectors;
 import btm.sword.util.math.VectorUtil;
 import lombok.Getter;
 import lombok.Setter;
@@ -92,7 +93,7 @@ public class UmbralBlade extends ThrownItem {
     private final Runnable attackEndCallback;
     private boolean attackCompleted = false;
 
-    private List<Vector> ctrlPointsForLunge;
+    private ControlVectors ctrlPointsForLunge;
     private boolean finishedLunging = false;
 
     private final InputBuffer inputBuffer = new InputBuffer();
@@ -309,6 +310,12 @@ public class UmbralBlade extends ThrownItem {
             blade -> {}
         ));
 
+        bladeStateMachine.addTransition(new Transition<>(
+            ReturningState.class,
+            AttackingQuickState.class,
+            blade -> isRequestedAndActive(BladeRequest.ATTACK_QUICK),
+            blade -> {}
+        ));
 
         // =====================================================================
         // LODGED
@@ -666,7 +673,7 @@ public class UmbralBlade extends ThrownItem {
 
     @Override
     protected void generateFunctions(double initialVelocity) {
-        if (ctrlPointsForLunge == null || ctrlPointsForLunge.isEmpty()) {
+        if (ctrlPointsForLunge == null) {
             super.generateFunctions(initialVelocity);
         }
         else {
@@ -693,8 +700,8 @@ public class UmbralBlade extends ThrownItem {
         }
         this.currentBasis = VectorUtil.getBasis(display.getLocation().setDirection(dir), dir);
 
-        List<Vector> adjusted = BezierUtil.adjustCtrlToBasis(currentBasis, ctrlPointsForLunge, 1);
-        this.positionFunction = BezierUtil.cubicBezier3D(adjusted.get(0), adjusted.get(1), adjusted.get(2), adjusted.get(3));
+        ControlVectors adjusted = ctrlPointsForLunge.adjustToBasis(currentBasis, 1);
+        this.positionFunction = BezierUtil.cubicBezier3D(adjusted);
         this.velocityFunction = t -> dir.multiply(0.5);
     }
 

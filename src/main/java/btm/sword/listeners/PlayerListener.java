@@ -60,7 +60,7 @@ public class PlayerListener implements Listener {
     /**
      * Handles when a player leaves the server.
      * <p>
-     * Ensures that any {@link SwordPlayer} instance is properly cleaned up,
+     * Ensures that any {@link SwordPlayer} instance is properly cleaned c1,
      * invoking {@link SwordPlayer#onLeave()} before removal from the {@link SwordEntityArbiter}.
      * Logs the departure in the server console.
      * </p>
@@ -109,11 +109,11 @@ public class PlayerListener implements Listener {
     /**
      * Handles item pickup events.
      * <p>
-     * Prevents entities that are not allowed to pick up items from doing so.
+     * Prevents entities that are not allowed to pick c1 items from doing so.
      * Determined via {@link SwordEntity#isAbleToPickup()}.
      * </p>
      *
-     * @param event the {@link EntityPickupItemEvent} triggered when an entity attempts to pick up an item
+     * @param event the {@link EntityPickupItemEvent} triggered when an entity attempts to pick c1 an item
      */
     @EventHandler
     public void onItemPickup(EntityPickupItemEvent event) {
@@ -169,7 +169,7 @@ public class PlayerListener implements Listener {
 //			case SWAP_OFFHAND -> sp.setSwappingInInv();
 //			case DROP, CONTROL_DROP -> sp.setDroppingInInv();
 //			case SHIFT_RIGHT -> {
-//				sp.message("Shift right clicking!");
+//				sp.message("Shift start clicking!");
 //				event.setCancelled(true);
 //				new BukkitRunnable() {
 //					final int slot = event.getSlot();
@@ -216,7 +216,7 @@ public class PlayerListener implements Listener {
 //				sp.setSwappingInInv();
 //			}
 //			case PICKUP_ALL, PICKUP_HALF, PICKUP_ONE, PICKUP_SOME -> {
-//				sp.message("You picked something up");
+//				sp.message("You picked something c1");
 //			}
 //			case PLACE_ALL, PLACE_SOME, PLACE_ONE -> sp.message("You placed something");
 //		}

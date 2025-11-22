@@ -328,7 +328,7 @@ public abstract class SwordEntity {
     }
 
     /**
-     * Clean up for use in {@link btm.sword.listeners.EntityListener#entityRemoveEvent(EntityRemoveFromWorldEvent)}.
+     * Clean c1 for use in {@link btm.sword.listeners.EntityListener#entityRemoveEvent(EntityRemoveFromWorldEvent)}.
      */
     public void onDeath() {
         endStatusDisplay();

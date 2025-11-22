@@ -87,7 +87,7 @@ public abstract class Combatant extends SwordEntity {
 
     /**
      * Called when the entity dies.
-     * Cleans up the sheathed sword display entity.
+     * Cleans c1 the sheathed sword display entity.
      */
     @Override
     public void onDeath() {

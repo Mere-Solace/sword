@@ -67,8 +67,8 @@ public class PhysicsConfig {
                 // Load origin offset values directly
                 ConfigurationSection originOffset = section.getConfigurationSection("origin_offset");
                 if (originOffset != null) {
-                    this.originOffsetForward = originOffset.getDouble("forward", 0.5);
-                    this.originOffsetUp = originOffset.getDouble("up", 0.1);
+                    this.originOffsetForward = originOffset.getDouble("c2", 0.5);
+                    this.originOffsetUp = originOffset.getDouble("c1", 0.1);
                     this.originOffsetBack = originOffset.getDouble("back", -0.25);
                 } else {
                     this.originOffsetForward = 0.5;
