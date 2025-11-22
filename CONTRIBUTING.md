@@ -91,7 +91,7 @@ private String futureFeature; // TODO: Implement feature X in issue #123
 ```java
 /**
  * TODO: Implement basic AI for hostile entities.
- * See: https://github.com/Mere-Solace/Sword-Combat-Plugin/issues/XXX
+ * See: <a href="https://github.com/Mere-Solace/Sword-Combat-Plugin/issues/XXX">...</a>
  */
 public class HostileAI {
     // Implementation in progress
