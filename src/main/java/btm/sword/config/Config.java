@@ -8,6 +8,9 @@ import java.util.stream.Collectors;
 
 import btm.sword.system.attack.AttackType;
 
+import net.kyori.adventure.text.format.TextColor;
+
+import org.bukkit.Color;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Display.Billboard;
 import org.bukkit.entity.EntityType;
@@ -102,6 +105,36 @@ public class Config {
         return section.contains(path) ? section.getStringList(path) : defaultValue;
     }
 
+    public static TextColor loadTextColor(ConfigurationSection section, String path, TextColor defaultValue) {
+        if (!section.contains(path)) return defaultValue;
+        String value = section.getString(path);
+        if (value == null || value.isEmpty()) return defaultValue;
+        try {
+            return TextColor.fromHexString(value);
+        } catch (Exception e) {
+            return defaultValue;
+        }
+    }
+
+    public static org.bukkit.Color loadColor(ConfigurationSection section, String path, org.bukkit.Color defaultValue) {
+        if (!section.contains(path)) return defaultValue;
+        String value = section.getString(path);
+        if (value == null || value.isEmpty()) return defaultValue;
+
+        try {
+            if (value.startsWith("#")) value = value.substring(1);
+
+            int rgb = Integer.parseInt(value, 16);
+            int r = (rgb >> 16) & 0xFF;
+            int g = (rgb >> 8) & 0xFF;
+            int b = rgb & 0xFF;
+
+            return org.bukkit.Color.fromRGB(r, g, b);
+        } catch (Exception e) {
+            return defaultValue;
+        }
+    }
+
     /**
      * Loader for List<EntityType> configuration values.
      */
@@ -164,30 +197,7 @@ public class Config {
     }
 
     // ==============================================================================
-    // ANGLES - Common angle constants
-    // ==============================================================================
-    /**
-     * Angle constants used throughout the combat system.
-     * <p>
-     * All angle values are in <b>radians</b> (π = 180°). Used primarily for
-     * entity rotation, attack arcs, and visual effects.
-     * </p>
-     *
-     * @see btm.sword.system.entity.umbral.UmbralBlade Umbral blade rotation behavior
-     */
-    public static class Angles {
-        public static float UMBRAL_BLADE_IDLE_PERIOD = (float) Math.PI / 8; // radians (22.5°)
-        static { register(
-            "angles.umbral_blade_idle_period",
-            UMBRAL_BLADE_IDLE_PERIOD,
-            Float.class,
-            v -> UMBRAL_BLADE_IDLE_PERIOD = v,
-            (ConfigurationSection s, String p, Float d) -> (float) s.getDouble(p, d)
-        ); }
-    }
-
-    // ==============================================================================
-    // DIRECTION - Directional vector constants (immutable via cloning)
+    //region DIRECTION - Directional vector constants (immutable via cloning)
     // ==============================================================================
     /**
      * Directional vector constants for common 3D directions.
@@ -227,6 +237,98 @@ public class Config {
         private static final Vector OUT_DOWN = new Vector(0, -1, 1);
         public static Vector OUT_DOWN() { return OUT_DOWN.clone(); }
     }
+    //endregion
+
+    // ==============================================================================
+    //region COLOR
+    // ==============================================================================
+    public static class SwordColor {
+        public static TextColor TITLE_INPUT_STRING = TextColor.color(151, 0, 0);
+        static { register(
+            "color.title_input_string",
+            TITLE_INPUT_STRING, TextColor.class,
+            v -> TITLE_INPUT_STRING = v,
+            Config::loadTextColor
+        ); }
+
+        public static TextColor TEXT_ITEM_NAME = TextColor.color(0, 110, 151);
+        static { register(
+            "color.title_input_string",
+            TEXT_ITEM_NAME, TextColor.class,
+            v -> TEXT_ITEM_NAME = v,
+            Config::loadTextColor
+        ); }
+
+        public static TextColor TEXT_ITEM_CONTROLS = TextColor.color(173, 109, 255);
+        static { register(
+            "color.text_cool",
+            TEXT_ITEM_CONTROLS, TextColor.class,
+            v -> TEXT_ITEM_CONTROLS = v,
+            Config::loadTextColor
+        ); }
+
+        public static TextColor TEXT_ITEM_HEADER = TextColor.color(225, 225, 225);
+        static { register(
+            "color.text_cool",
+            TEXT_ITEM_HEADER, TextColor.class,
+            v -> TEXT_ITEM_HEADER = v,
+            Config::loadTextColor
+        ); }
+
+        public static TextColor TEXT_ITEM_BASE = TextColor.color(120, 120, 120);
+        static { register(
+            "color.text_cool",
+            TEXT_ITEM_BASE, TextColor.class,
+            v -> TEXT_ITEM_BASE = v,
+            Config::loadTextColor
+        ); }
+
+        public static TextColor TEXT_COOL = TextColor.color(240, 161, 12);
+        static { register(
+            "color.text_cool",
+            TEXT_COOL, TextColor.class,
+            v -> TEXT_COOL = v,
+            Config::loadTextColor
+        ); }
+
+        public static TextColor TEXT_COOL_DARK = TextColor.color(51, 60, 75);
+        static { register(
+            "color.text_cool",
+            TEXT_COOL_DARK, TextColor.class,
+            v -> TEXT_COOL_DARK = v,
+            Config::loadTextColor
+        ); }
+
+        public static Color UMBRAL_GLOW = Color.fromRGB(50, 50, 50);
+        static { register("color.text_cool",
+            UMBRAL_GLOW, Color.class,
+            v -> UMBRAL_GLOW = v,
+            Config::loadColor
+        ); }
+    }
+
+    // ==============================================================================
+    //region ANGLE - Common angle constants
+    // ==============================================================================
+    /**
+     * Angle constants used throughout the combat system.
+     * <p>
+     * All angle values are in <b>radians</b> (π = 180°). Used primarily for
+     * entity rotation, attack arcs, and visual effects.
+     * </p>
+     *
+     * @see btm.sword.system.entity.umbral.UmbralBlade Umbral blade rotation behavior
+     */
+    public static class Angle {
+        public static float UMBRAL_BLADE_IDLE_PERIOD = (float) Math.PI / 8; // radians (22.5°)
+        static { register(
+            "angle.umbral_blade_idle_period",
+            UMBRAL_BLADE_IDLE_PERIOD, Float.class,
+            v -> UMBRAL_BLADE_IDLE_PERIOD = v,
+            Config::loadFloat
+        ); }
+    }
+
 
     // ==============================================================================
     //region PHYSICS - Projectile motion, gravity, and velocity

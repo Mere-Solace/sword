@@ -5,6 +5,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
+import org.bukkit.Color;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -612,23 +613,23 @@ public class UmbralBlade extends ThrownItem {
     private void generateUmbralItems() {
         // item Stack used for determining umbral blade inputs
         this.link = new ItemStackBuilder(Material.HEAVY_CORE)
-            .name(Component.text("~ ", TextColor.color(160, 17, 17))
+            .name(Component.text("~ ", Config.SwordColor.TEXT_ITEM_NAME)
                 .append(Component.text(thrower.getDisplayName() + "'s Soul Link",
-                    TextColor.color(204, 0, 0), TextDecoration.BOLD))
-                .append(Component.text(" ~", TextColor.color(160, 17, 17))))
+                    Config.SwordColor.TEXT_ITEM_NAME, TextDecoration.BOLD))
+                .append(Component.text(" ~", Config.SwordColor.TEXT_ITEM_NAME)))
             .lore(List.of(
                 Component.text(""),
-                Component.text("Controls:", TextColor.color(200, 200, 200), TextDecoration.ITALIC),
-                Component.text("Drop + Swap", TextColor.color(255, 100, 100))
-                    .append(Component.text(" - Toggle Standby/Sheathed", TextColor.color(150, 150, 150))),
-                Component.text("  • Standby: ", TextColor.color(180, 180, 180))
-                    .append(Component.text("Blade hovers, ready to attack", TextColor.color(120, 120, 120))),
-                Component.text("  • Sheathed: ", TextColor.color(180, 180, 180))
-                    .append(Component.text("Blade stored on back", TextColor.color(120, 120, 120))),
+                Component.text("Controls:", Config.SwordColor.TEXT_ITEM_HEADER, TextDecoration.ITALIC),
+                Component.text("Drop + Swap", Config.SwordColor.TEXT_ITEM_CONTROLS)
+                    .append(Component.text(" - Toggle Standby/Sheathed", Config.SwordColor.TEXT_ITEM_BASE)),
+                Component.text("  • Standby: ", Config.SwordColor.TEXT_ITEM_HEADER)
+                    .append(Component.text("Blade hovers, ready to attack", Config.SwordColor.TEXT_ITEM_BASE)),
+                Component.text("  • Sheathed: ", Config.SwordColor.TEXT_ITEM_HEADER)
+                    .append(Component.text("Blade stored in sheath on hip", Config.SwordColor.TEXT_ITEM_BASE)),
                 Component.text(""),
-                Component.text("Swap + Left Click", TextColor.color(255, 100, 100))
-                    .append(Component.text(" - Wield Blade", TextColor.color(150, 150, 150))),
-                Component.text("  • Equip as weapon in hand", TextColor.color(120, 120, 120))
+                Component.text("Swap + Left Click", Config.SwordColor.TEXT_ITEM_CONTROLS)
+                    .append(Component.text(" - Wield Blade", Config.SwordColor.TEXT_ITEM_HEADER)),
+                Component.text("  • Equip as weapon in hand", Config.SwordColor.TEXT_ITEM_HEADER)
             ))
             .unbreakable(true)
             .tag(KeyRegistry.SOUL_LINK_KEY, thrower.getUniqueId().toString())
@@ -636,27 +637,22 @@ public class UmbralBlade extends ThrownItem {
             .build();
 
         this.blade = new ItemStackBuilder(weapon.getType())
-            .name(Component.text("~ ", TextColor.color(51, 60, 75))
+            .name(Component.text("~ ", Config.SwordColor.TEXT_COOL_DARK)
                 .append(Component.text(thrower.getDisplayName() + "'s Blade",
-                    TextColor.color(240, 156, 40), TextDecoration.BOLD))
-                .append(Component.text(" ~", TextColor.color(51, 60, 75))))
+                    Config.SwordColor.TEXT_COOL, TextDecoration.BOLD))
+                .append(Component.text(" ~", Config.SwordColor.TEXT_COOL_DARK)))
             .lore(List.of(
                 Component.text(""),
-                Component.text("Wielded Form", TextColor.color(200, 200, 200), TextDecoration.ITALIC),
-                Component.text("Use normal combat inputs", TextColor.color(150, 150, 150)),
+                Component.text("Wielded Form", Config.SwordColor.TEXT_ITEM_HEADER, TextDecoration.ITALIC),
+                Component.text("Use normal combat inputs", Config.SwordColor.TEXT_ITEM_BASE),
                 Component.text(""),
-                Component.text("Q + F", TextColor.color(255, 100, 100))
-                    .append(Component.text(" - Return to Standby", TextColor.color(150, 150, 150)))
+                Component.text("Q + F", Config.SwordColor.TEXT_ITEM_CONTROLS)
+                    .append(Component.text(" - Return to Standby", Config.SwordColor.TEXT_ITEM_BASE))
             ))
             .unbreakable(true)
             .tag(KeyRegistry.SOUL_LINK_KEY, thrower.getUniqueId().toString())
             .hideAll()
             .build();
-    }
-
-    public void removeWeaponDisplay() {
-        if (display != null)
-            display.remove();
     }
 
     public void resetWeaponDisplay() {
