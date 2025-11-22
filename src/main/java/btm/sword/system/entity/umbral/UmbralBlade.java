@@ -601,24 +601,28 @@ public class UmbralBlade extends ThrownItem {
             Location targeted = thrower.getChestLocation().add(thrower.entity().getEyeLocation().getDirection().multiply(12));
             Vector to = targeted.toVector().subtract(display.getLocation().toVector());
 
-            DrawUtil.secant(List.of(Prefab.Particles.TEST_SWORD_BLUE), attackOrigin, targeted, 0.25);
+            DrawUtil.secant(List.of(Prefab.Particles.TEST_SPARKLE), attackOrigin, targeted, 0.25);
 
             attackOrigin.setDirection(to);
             attackFrame = new Basis(attackOrigin, true);
 
             dist = targeted.toVector().subtract(attackOrigin.toVector()).length();
 
-            start = attackFrame.forward().multiply(-2);
+            start = attackFrame.forward().multiply(-dist/10)
+                .add(attackFrame.right().multiply(dist/5));
             c1 = attackOrigin.clone()
-                .add(attackFrame.forward().multiply(1))
+                .add(attackFrame.forward().multiply(dist/5))
+                .add(attackFrame.right().multiply(dist/3))
                 .toVector()
                 .subtract(attackOrigin.toVector());
             c2 = targeted.clone()
-                .add(attackFrame.right().multiply(2))
+                .add(attackFrame.forward().multiply(-dist/5))
+                .add(attackFrame.right().multiply(dist/3))
                 .toVector()
                 .subtract(attackOrigin.toVector());
             end = targeted.clone()
-                .add(attackFrame.forward().multiply(2))
+                .add(attackFrame.forward().multiply(dist/2))
+                .add(attackFrame.right().multiply(-dist/3))
                 .toVector()
                 .subtract(attackOrigin.toVector());
         }
@@ -628,24 +632,26 @@ public class UmbralBlade extends ThrownItem {
             Location targeted = target.getChestLocation();
             Vector to = targeted.toVector().subtract(display.getLocation().toVector());
 
-            DrawUtil.secant(List.of(Prefab.Particles.TEST_SWORD_BLUE), attackOrigin, targeted, 0.25);
-
             attackOrigin.setDirection(to);
             attackFrame = new Basis(attackOrigin, true);
 
             dist = targeted.toVector().subtract(attackOrigin.toVector()).length();
 
-            start = attackFrame.forward().multiply(-2);
+            start = attackFrame.forward().multiply(-dist/10)
+                .add(attackFrame.right().multiply(dist/5));
             c1 = attackOrigin.clone()
-                .add(attackFrame.forward().multiply(1))
+                .add(attackFrame.forward().multiply(dist/5))
+                .add(attackFrame.right().multiply(dist/3))
                 .toVector()
                 .subtract(attackOrigin.toVector());
             c2 = targeted.clone()
-                .add(attackFrame.right().multiply(2))
+                .add(attackFrame.forward().multiply(-dist/5))
+                .add(attackFrame.right().multiply(dist/3))
                 .toVector()
                 .subtract(attackOrigin.toVector());
             end = targeted.clone()
-                .add(attackFrame.forward().multiply(2))
+                .add(attackFrame.forward().multiply(dist/2))
+                .add(attackFrame.right().multiply(-dist/3))
                 .toVector()
                 .subtract(attackOrigin.toVector());
         }
@@ -653,17 +659,19 @@ public class UmbralBlade extends ThrownItem {
         ControlVectors ctrl = new ControlVectors(start, end, c1, c2);
         GeneratedAttackProfile profile = new GeneratedAttackProfile(ctrl, Attack::getTo);
 
+        int duration = 10 * (int) dist;
+
         Attack attack = new UmbralBladeAttack(display, profile,
             true, true, 1,
-            10, 30, 1000,
-            0.2, -0.2)
+            10, 30, (int) (duration * 1.5),
+            0.2, -0.1)
             .setBlade(this)
             .setInitialMovementTicks(5)
             .setDrawParticles(false)
             .setNextAttack(
                 new UmbralBladeAttack(display, profile,
                     true, false, 0,
-                    20, 10, 1000,
+                    30, 10, duration,
                     0, 1)
                     .setBlade(this)
                     .setHitInstructions(

@@ -77,6 +77,6 @@ public class AttackAction extends SwordAction {
     }
 
     public static void basicSlash(Combatant executor, AttackType type, Boolean orientWithPitch) {
-        new Attack(type, orientWithPitch).execute(executor);
+        new Attack(type, orientWithPitch, 50, 20, 0, 1).execute(executor);
     }
 }
