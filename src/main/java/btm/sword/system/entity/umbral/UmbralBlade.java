@@ -28,6 +28,7 @@ import btm.sword.system.action.utility.thrown.InteractiveItemArbiter;
 import btm.sword.system.action.utility.thrown.ThrownItem;
 import btm.sword.system.attack.Attack;
 import btm.sword.system.attack.AttackType;
+import btm.sword.system.attack.GeneratedAttackProfile;
 import btm.sword.system.attack.UmbralBladeAttack;
 import btm.sword.system.entity.base.SwordEntity;
 import btm.sword.system.entity.types.Combatant;
@@ -57,6 +58,7 @@ import btm.sword.util.Prefab;
 import btm.sword.util.display.DisplayUtil;
 import btm.sword.util.display.DrawUtil;
 import btm.sword.util.display.ParticleWrapper;
+import btm.sword.util.math.Basis;
 import btm.sword.util.math.BezierUtil;
 import btm.sword.util.math.ControlVectors;
 import btm.sword.util.math.VectorUtil;
@@ -154,7 +156,7 @@ public class UmbralBlade extends ThrownItem {
         // 3) Reactivate to last state
         bladeStateMachine.addTransition(new Transition<>(
             InactiveState.class,
-            PreviousState.class,
+            StandbyState.class,
             blade -> isRequested(BladeRequest.ACTIVATE_TO_PREVIOUS),
             blade -> {}
         ));
@@ -162,7 +164,7 @@ public class UmbralBlade extends ThrownItem {
         // 4) Recover and go back to last state
         bladeStateMachine.addTransition(new Transition<>(
             RecoverState.class,
-            PreviousState.class,
+            StandbyState.class,
             blade -> (display != null && !display.isDead() && display.isValid()) ||
                 isRequested(BladeRequest.RESUME_FROM_REPAIR),
             blade -> { }
@@ -314,6 +316,13 @@ public class UmbralBlade extends ThrownItem {
             ReturningState.class,
             AttackingQuickState.class,
             blade -> isRequestedAndActive(BladeRequest.ATTACK_QUICK),
+            blade -> {}
+        ));
+
+        bladeStateMachine.addTransition(new Transition<>(
+            ReturningState.class,
+            AttackingHeavyState.class,
+            blade -> isRequestedAndActive(BladeRequest.ATTACK_HEAVY),
             blade -> {}
         ));
 
@@ -561,19 +570,107 @@ public class UmbralBlade extends ThrownItem {
                 .add(thrower.entity().getEyeLocation().getDirection().multiply(range));
         }
         else {
+            DrawUtil.secant(List.of(Prefab.Particles.TEST_SPARKLE), display.getLocation(), target.getChestLocation(), 0.5);
             // From the bladeDisplay TO the target
             Vector to = target.getChestLocation().toVector()
                 .subtract(display.getLocation().toVector());
 
-            DrawUtil.line(List.of(Prefab.Particles.TEST_SPARKLE), display.getLocation(), to.normalize(), 20, 0.25);
+            DrawUtil.secant(List.of(Prefab.Particles.TEST_SWORD_BLUE), display.getLocation(), target.getChestLocation(), 0.25);
 
             attackOrigin = target.getChestLocation().clone()
-                .subtract(to).setDirection(to.normalize());
-
-//            thrower.message("Targeted this guy: " + target.getDisplayName());
+                .subtract(to.normalize()).setDirection(to.normalize());
         }
 
         attack = heavy ? heavyAttacks[0].apply(thrower) : basicAttacks[0].apply(thrower); // TODO dynamic.
+
+        attack.setOriginOfAll(attackOrigin);
+        attack.execute(thrower);
+    }
+
+    public void performTargetedAttack(double range) {
+        SwordEntity target = thrower.getTargetedEntity(range);
+        Location attackOrigin = display.getLocation();
+        Vector start;
+        Vector end;
+        Vector c1;
+        Vector c2;
+        Basis attackFrame;
+        double dist;
+
+        if (target == null || target.isInvalid()) {
+            Location targeted = thrower.getChestLocation().add(thrower.entity().getEyeLocation().getDirection().multiply(12));
+            Vector to = targeted.toVector().subtract(display.getLocation().toVector());
+
+            DrawUtil.secant(List.of(Prefab.Particles.TEST_SWORD_BLUE), attackOrigin, targeted, 0.25);
+
+            attackOrigin.setDirection(to);
+            attackFrame = new Basis(attackOrigin, true);
+
+            dist = targeted.toVector().subtract(attackOrigin.toVector()).length();
+
+            start = attackFrame.forward().multiply(-2);
+            c1 = attackOrigin.clone()
+                .add(attackFrame.forward().multiply(1))
+                .toVector()
+                .subtract(attackOrigin.toVector());
+            c2 = targeted.clone()
+                .add(attackFrame.right().multiply(2))
+                .toVector()
+                .subtract(attackOrigin.toVector());
+            end = targeted.clone()
+                .add(attackFrame.forward().multiply(2))
+                .toVector()
+                .subtract(attackOrigin.toVector());
+        }
+        else {
+            DrawUtil.secant(List.of(Prefab.Particles.TEST_SPARKLE), display.getLocation(), target.getChestLocation(), 0.5);
+
+            Location targeted = target.getChestLocation();
+            Vector to = targeted.toVector().subtract(display.getLocation().toVector());
+
+            DrawUtil.secant(List.of(Prefab.Particles.TEST_SWORD_BLUE), attackOrigin, targeted, 0.25);
+
+            attackOrigin.setDirection(to);
+            attackFrame = new Basis(attackOrigin, true);
+
+            dist = targeted.toVector().subtract(attackOrigin.toVector()).length();
+
+            start = attackFrame.forward().multiply(-2);
+            c1 = attackOrigin.clone()
+                .add(attackFrame.forward().multiply(1))
+                .toVector()
+                .subtract(attackOrigin.toVector());
+            c2 = targeted.clone()
+                .add(attackFrame.right().multiply(2))
+                .toVector()
+                .subtract(attackOrigin.toVector());
+            end = targeted.clone()
+                .add(attackFrame.forward().multiply(2))
+                .toVector()
+                .subtract(attackOrigin.toVector());
+        }
+
+        ControlVectors ctrl = new ControlVectors(start, end, c1, c2);
+        GeneratedAttackProfile profile = new GeneratedAttackProfile(ctrl, Attack::getTo);
+
+        Attack attack = new UmbralBladeAttack(display, profile,
+            true, true, 1,
+            10, 30, 1000,
+            0.2, -0.2)
+            .setBlade(this)
+            .setInitialMovementTicks(5)
+            .setDrawParticles(false)
+            .setNextAttack(
+                new UmbralBladeAttack(display, profile,
+                    true, false, 0,
+                    20, 10, 1000,
+                    0, 1)
+                    .setBlade(this)
+                    .setHitInstructions(
+                        swordEntity ->
+                            Prefab.Particles.BLEED.display(swordEntity.getChestLocation()))
+                    .setCallback(attackEndCallback, 200),
+                100);
 
         attack.setOriginOfAll(attackOrigin);
         attack.execute(thrower);

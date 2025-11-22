@@ -440,6 +440,18 @@ public class InputExecutionTree {
             true,
             true);
 
+        // heavy sweep
+        add(List.of(InputType.SWAP, InputType.RIGHT, InputType.LEFT),
+            new InputAction(
+                UmbralBladeAction::sweep,
+                executor -> 400L,
+                Combatant::canPerformAction,
+                true,
+                true),
+            true,
+            true,
+            true);
+
         // lunge (umbral throw action)
         add(List.of(InputType.SHIFT, InputType.SWAP),
             new InputAction(

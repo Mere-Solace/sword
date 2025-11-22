@@ -16,6 +16,8 @@ import btm.sword.system.attack.AttackType;
 import btm.sword.util.sound.SoundType;
 import net.kyori.adventure.text.format.TextColor;
 
+import org.jetbrains.annotations.Nullable;
+
 /**
  * Static configuration class for Sword: Combat Evolved.
  * <p>
@@ -301,6 +303,13 @@ public class Config {
         static { register("color.umbral_glow",
             UMBRAL_GLOW, Color.class,
             v -> UMBRAL_GLOW = v,
+            Config::loadColor
+        ); }
+
+        public static @Nullable Color FEROCIOUS_SWEEP = Color.fromRGB(255, 0, 0);
+        static { register("color.ferocious_sweep",
+            FEROCIOUS_SWEEP, Color.class,
+            v -> FEROCIOUS_SWEEP = v,
             Config::loadColor
         ); }
     }
@@ -665,7 +674,7 @@ public class Config {
                 ConfigurationSection::getDouble
         ); }
 
-        public static double HITBOXES_SECANT_RADIUS = 0.4;
+        public static double HITBOXES_SECANT_RADIUS = 1; // Must be above 1
         static { register("combat.hitboxes_secant_radius",
                 HITBOXES_SECANT_RADIUS, Double.class,
                 v -> HITBOXES_SECANT_RADIUS = v,

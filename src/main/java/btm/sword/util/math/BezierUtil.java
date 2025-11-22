@@ -1,6 +1,5 @@
 package btm.sword.util.math;
 
-import java.util.List;
 import java.util.function.Function;
 
 import org.bukkit.util.Vector;

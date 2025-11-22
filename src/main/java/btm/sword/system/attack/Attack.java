@@ -12,6 +12,7 @@ import org.bukkit.Particle;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.scheduler.BukkitRunnable;
+import org.bukkit.util.NumberConversions;
 import org.bukkit.util.RayTraceResult;
 import org.bukkit.util.Vector;
 
@@ -36,7 +37,7 @@ public class Attack extends SwordAction implements Runnable {
 
     protected Combatant attacker;
     protected LivingEntity attackingEntity;
-    protected final AttackType attackType;
+    protected final AttackProfile attackProfile;
     protected final boolean orientWithPitch;
 
     protected final ControlVectors controlVectors;
@@ -80,9 +81,9 @@ public class Attack extends SwordAction implements Runnable {
     protected Attack nextAttack;
     protected int millisecondDelayBeforeNextAttack;
 
-    public Attack (AttackType type, boolean orientWithPitch) {
-        controlVectors = type.controlVectors();
-        this.attackType = type;
+    public Attack(AttackProfile profile, boolean orientWithPitch) {
+        controlVectors = profile.controlVectors();
+        this.attackProfile = profile;
         this.orientWithPitch = orientWithPitch;
 
         hitDuringAttack = new HashSet<>();
@@ -95,9 +96,9 @@ public class Attack extends SwordAction implements Runnable {
         this.rangeMultiplier = Config.Combat.ATTACK_CLASS_MODIFIERS_RANGE_MULTIPLIER;
     }
 
-    public Attack(AttackType type, boolean orientWithPitch,
+    public Attack(AttackProfile profile, boolean orientWithPitch,
                   int attackMilliseconds, int attackIterations, double attackStartValue, double attackEndValue) {
-        this(type, orientWithPitch);
+        this(profile, orientWithPitch);
         this.attackMilliseconds = attackMilliseconds;
         this.attackIterations = attackIterations;
         this.attackStartValue = attackStartValue;
@@ -181,11 +182,9 @@ public class Attack extends SwordAction implements Runnable {
         int msPerIteration = attackMilliseconds / attackIterations;
 
         generateBezierFunction();
-
         determineOrigin();
-
         prev = weaponPathFunction.apply(attackStartValue - step);
-
+        startupLogic();
         calcTickValues();
 
         curIteration = 0;
@@ -218,6 +217,7 @@ public class Attack extends SwordAction implements Runnable {
                                 new BukkitRunnable() {
                                     @Override
                                     public void run() {
+                                        endingLogic();
                                         nextAttack.execute(attacker);
                                     }
                                 }, millisecondDelayBeforeNextAttack, TimeUnit.MILLISECONDS
@@ -227,8 +227,20 @@ public class Attack extends SwordAction implements Runnable {
                     prev = cur;
                     curIteration++;
                 }
-            }, curIteration * msPerIteration, TimeUnit.MILLISECONDS);
+            }, calcIterationStartDelay(i, msPerIteration), TimeUnit.MILLISECONDS);
         }
+    }
+
+    protected void startupLogic() {
+
+    }
+
+    protected void endingLogic() {
+
+    }
+
+    protected int calcIterationStartDelay(int i, int msPerIteration) {
+        return i * msPerIteration;
     }
 
     public void handleCallback() {
@@ -276,7 +288,7 @@ public class Attack extends SwordAction implements Runnable {
                         Config.Combat.ATTACK_CLASS_HIT_SHARDS,
                         Config.Combat.ATTACK_CLASS_HIT_TOUGHNESS,
                         Config.Combat.ATTACK_CLASS_HIT_SOULFIRE,
-                            attackType.knockbackFunction().apply(this));
+                            attackProfile.knockbackFunction().apply(this));
 
                     Prefab.Particles.TEST_HIT.display(currentTarget.getChestLocation());
 
@@ -288,6 +300,9 @@ public class Attack extends SwordAction implements Runnable {
     }
 
     protected HashSet<LivingEntity> collectHitEntities() {
+        if (origin == null || origin.toVector().isZero() || !origin.isFinite()) {
+            return new HashSet<>();
+        }
         double secantRadius = Config.Combat.HITBOXES_SECANT_RADIUS;
         return HitboxUtil.secant(origin, attackLocation, secantRadius, filter);
     }
@@ -322,7 +337,9 @@ public class Attack extends SwordAction implements Runnable {
         curUp = basis.up();
         curForward = basis.forward();
 
-        ControlVectors adjusted = controlVectors.adjustToBasis(basis, rangeMultiplier);
+        ControlVectors adjusted = attackProfile instanceof GeneratedAttackProfile ?
+            controlVectors :
+            controlVectors.adjustToBasis(basis, rangeMultiplier);
         weaponPathFunction = BezierUtil.cubicBezier3D(adjusted);
     }
 

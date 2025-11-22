@@ -42,10 +42,10 @@ public class UmbralBladeAction extends SwordAction {
         }
     }
 
-    public static void recall(Combatant wielder) {
+    public static void sweep(Combatant wielder) {
         UmbralBlade blade = wielder.getUmbralBlade();
         if (blade == null) return;
 
-        blade.request(BladeRequest.RECALL);
+        blade.request(BladeRequest.ATTACK_HEAVY);
     }
 }
